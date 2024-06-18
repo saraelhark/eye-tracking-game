@@ -40,38 +40,25 @@ def draw_gaze(img: np.ndarray, gaze: dict):
     y_max = int(face["y"] + face["height"] / 2)
     cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (255, 0, 0), 3)
 
-    # draw gaze arrow
-    _, imgW = img.shape[:2]
-    arrow_length = imgW / 2
-    dx = -arrow_length * np.sin(gaze["yaw"]) * np.cos(gaze["pitch"])
-    dy = -arrow_length * np.sin(gaze["pitch"])
-    cv2.arrowedLine(
-        img,
-        (int(face["x"]), int(face["y"])),
-        (int(face["x"] + dx), int(face["y"] + dy)),
-        (0, 0, 255),
-        2,
-        cv2.LINE_AA,
-        tipLength=0.18,
-    )
+    image_height, image_width = img.shape[:2]
 
-    '''
-    # draw keypoints
-    for keypoint in face["landmarks"]:
-        color, thickness, radius = (0, 255, 0), 2, 2
-        x, y = int(keypoint["x"]), int(keypoint["y"])
-        cv2.circle(img, (x, y), thickness, color, radius)
-    '''
+    length_per_pixel = HEIGHT_OF_HUMAN_FACE / gaze["face"]["height"]
 
-    '''
-    # draw label and score
-    label = "yaw {:.2f}  pitch {:.2f}".format(
-        gaze["yaw"] / np.pi * 180, gaze["pitch"] / np.pi * 180
-    )
-    cv2.putText(
-        img, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 0), 3
-    )
-    '''
+    dx = -DISTANCE_TO_OBJECT * np.tan(gaze['yaw']) / length_per_pixel
+    # 100000000 is used to denote out of bounds
+    dx = dx if not np.isnan(dx) else 100000000
+    dy = -DISTANCE_TO_OBJECT * np.arccos(gaze['yaw']) * np.tan(gaze['pitch']) / length_per_pixel
+    dy = dy if not np.isnan(dy) else 100000000
+
+    # invert left-right the whole frame
+    img = cv2.flip(img, 1)
+
+    # Adjust the gaze_point_x coordinate for the flipped frame
+    gaze_point_x = image_width - int(image_width / 2 + dx)
+    gaze_point_y = int(image_height / 2 + dy)
+    gaze_point = (gaze_point_x, gaze_point_y)
+
+    cv2.circle(img, gaze_point, 25, (0, 0, 255), -1)
 
     return img
 
@@ -87,7 +74,6 @@ if __name__ == "__main__":
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-    
     while True:
         _, frame = cap.read()
 
@@ -98,20 +84,7 @@ if __name__ == "__main__":
 
         # draw face & gaze
         gaze = gazes[0]
-        draw_gaze(frame, gaze)
-
-        image_height, image_width = frame.shape[:2]
-
-        length_per_pixel = HEIGHT_OF_HUMAN_FACE / gaze["face"]["height"]
-
-        dx = -DISTANCE_TO_OBJECT * np.tan(gaze['yaw']) / length_per_pixel
-        # 100000000 is used to denote out of bounds
-        dx = dx if not np.isnan(dx) else 100000000
-        dy = -DISTANCE_TO_OBJECT * np.arccos(gaze['yaw']) * np.tan(gaze['pitch']) / length_per_pixel
-        dy = dy if not np.isnan(dy) else 100000000
-        gaze_point = int(image_width / 2 + dx), int(image_height / 2 + dy)
-        
-        cv2.circle(frame, gaze_point, 25, (0, 0, 255), -1)
+        frame = draw_gaze(frame, gaze)
 
         cv2.imshow("gaze", frame)
 
