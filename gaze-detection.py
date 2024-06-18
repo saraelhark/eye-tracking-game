@@ -10,7 +10,7 @@ load_dotenv()
 
 IMG_PATH = "image.jpg"
 API_KEY = os.environ.get("API_KEY")
-DISTANCE_TO_OBJECT = 500  # mm
+DISTANCE_TO_OBJECT = 300  # mm
 HEIGHT_OF_HUMAN_FACE = 250  # mm
 GAZE_DETECTION_URL = (
     "http://127.0.0.1:9001/gaze/gaze_detection?api_key=" + API_KEY
@@ -26,9 +26,7 @@ def detect_gazes(frame: np.ndarray):
             "image": {"type": "base64", "value": img_base64.decode("utf-8")},
         },
     )
-    #print(resp.content)
-    #print(resp.status_code)
-    #print(resp.headers)
+
     gazes = resp.json()[0]["predictions"]
     return gazes
 
@@ -57,12 +55,15 @@ def draw_gaze(img: np.ndarray, gaze: dict):
         tipLength=0.18,
     )
 
+    '''
     # draw keypoints
     for keypoint in face["landmarks"]:
         color, thickness, radius = (0, 255, 0), 2, 2
         x, y = int(keypoint["x"]), int(keypoint["y"])
         cv2.circle(img, (x, y), thickness, color, radius)
+    '''
 
+    '''
     # draw label and score
     label = "yaw {:.2f}  pitch {:.2f}".format(
         gaze["yaw"] / np.pi * 180, gaze["pitch"] / np.pi * 180
@@ -70,6 +71,7 @@ def draw_gaze(img: np.ndarray, gaze: dict):
     cv2.putText(
         img, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 0), 3
     )
+    '''
 
     return img
 
@@ -77,6 +79,15 @@ def draw_gaze(img: np.ndarray, gaze: dict):
 if __name__ == "__main__":
     cap = cv2.VideoCapture(0)
 
+    # check if the webcam is opened correctly
+    if not cap.isOpened():
+        raise Exception("Could not open video device")
+
+    # set frame size
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+    
     while True:
         _, frame = cap.read()
 
@@ -106,3 +117,4 @@ if __name__ == "__main__":
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
+
