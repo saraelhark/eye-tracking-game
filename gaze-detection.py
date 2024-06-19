@@ -4,12 +4,13 @@ import numpy as np
 import requests
 from dotenv import load_dotenv
 import os
+import time
 
 load_dotenv()
 
 IMG_PATH = "image.jpg"
 API_KEY = os.environ.get("API_KEY")
-DISTANCE_TO_OBJECT = 500  # mm
+DISTANCE_TO_OBJECT = 400  # mm
 HEIGHT_OF_HUMAN_FACE = 250  # mm
 GAZE_DETECTION_URL = (
     "http://127.0.0.1:9001/gaze/gaze_detection?api_key=" + API_KEY
@@ -91,7 +92,8 @@ def check_face_in_ideal_square(gaze):
 
 # function to ask the use to align his face in the ideal square
 def align_face_in_ideal_square():
-    print("Please align your face in the green square in the middle of the playground.")
+    print("Please align your face in the green square in the middle of the playground for 5 seconds.")
+    start_time = None
     while True:
         _, frame = cap.read()
         frame = cv2.flip(frame, 1)
@@ -102,7 +104,13 @@ def align_face_in_ideal_square():
             frame = draw_ideal_square(frame)
             cv2.imshow("gaze calib", frame)
             if check_face_in_ideal_square(gaze):
-                break
+                if start_time is None:
+                    start_time = time.time()
+                elapsed_time = time.time() - start_time
+                if elapsed_time >= 5:
+                    break
+            else:
+                start_time = None
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
@@ -180,10 +188,41 @@ def calibrate_corner(corner_x, corner_y, corner_name):
 def calibrate_gaze_mapping():
     image_height, image_width = HEIGHT_OF_PLAYGROUND, WIDTH_OF_PLAYGROUND
 
-    top_left_x, top_left_y = calibrate_corner(0, 0, "top-left")
-    top_right_x, top_right_y = calibrate_corner(image_width, 0, "top-right")
-    bottom_left_x, bottom_left_y = calibrate_corner(0, image_height, "bottom-left")
-    bottom_right_x, bottom_right_y = calibrate_corner(image_width, image_height, "bottom-right")
+    top_left_x = []
+    top_left_y = []
+    for _ in range(4):
+        x, y = calibrate_corner(0, 0, "top-left")
+        top_left_x.append(x)
+        top_left_y.append(y)
+    top_left_x = int(sum(top_left_x) / len(top_left_x))
+    top_left_y = int(sum(top_left_y) / len(top_left_y))
+
+    top_right_x = []
+    top_right_y = []
+    for _ in range(4):
+        x, y = calibrate_corner(image_width, 0, "top-right")
+        top_right_x.append(x)
+        top_right_y.append(y)
+    top_right_x = int(sum(top_right_x) / len(top_right_x))
+    top_right_y = int(sum(top_right_y) / len(top_right_y))
+
+    bottom_left_x = []
+    bottom_left_y = []
+    for _ in range(4):
+        x, y = calibrate_corner(0, image_height, "bottom-left")
+        bottom_left_x.append(x)
+        bottom_left_y.append(y)
+    bottom_left_x = int(sum(bottom_left_x) / len(bottom_left_x))
+    bottom_left_y = int(sum(bottom_left_y) / len(bottom_left_y))
+
+    bottom_right_x = []
+    bottom_right_y = []
+    for _ in range(4):
+        x, y = calibrate_corner(image_width, image_height, "bottom-right")
+        bottom_right_x.append(x)
+        bottom_right_y.append(y)
+    bottom_right_x = int(sum(bottom_right_x) / len(bottom_right_x))
+    bottom_right_y = int(sum(bottom_right_y) / len(bottom_right_y))
     
     # close the window
     cv2.destroyAllWindows()
