@@ -86,13 +86,27 @@ def draw_gaze_point(img, gaze, transformation_matrix):
     gaze_point_x, gaze_point_y = calculate_gaze_point_displacements(gaze)
     gaze_point_x, gaze_point_y = calculate_gaze_point(gaze_point_x, gaze_point_y, image_width, image_height)
 
-    print("Raw", "gaze_point_x: ", gaze_point_x, " gaze_point_y: ", gaze_point_y)
-
     gaze_point_x, gaze_point_y = transform_coordinates(gaze_point_x, gaze_point_y, transformation_matrix, image_width, image_height)
+
+    # Initialize the moving average filter
+    if not hasattr(draw_gaze_point, 'gaze_history'):
+        draw_gaze_point.gaze_history = []
+        draw_gaze_point.window_size = 5  # Adjust this value to control the smoothing effect
+
+    # Add the current gaze point to the history
+    draw_gaze_point.gaze_history.append((gaze_point_x, gaze_point_y))
+
+    # Limit the history to the window size
+    draw_gaze_point.gaze_history = draw_gaze_point.gaze_history[-draw_gaze_point.window_size:]
+
+    # Calculate the moving average
+    filtered_gaze_point_x = int(sum(x for x, _ in draw_gaze_point.gaze_history) / len(draw_gaze_point.gaze_history))
+    filtered_gaze_point_y = int(sum(y for _, y in draw_gaze_point.gaze_history) / len(draw_gaze_point.gaze_history))
+
+    print(f"Raw gaze point: ({gaze_point_x}, {gaze_point_y})")
+    print(f"Filtered gaze point: ({filtered_gaze_point_x}, {filtered_gaze_point_y})")
     
-    print("gaze_point_scaled_x: ", gaze_point_x, " gaze_point_scaled_y: ", gaze_point_y)
-    
-    gaze_point = (gaze_point_x, gaze_point_y)
+    gaze_point = (filtered_gaze_point_x, filtered_gaze_point_y)
 
     cv2.circle(img, gaze_point, 10, (0, 0, 255), -1)
 
