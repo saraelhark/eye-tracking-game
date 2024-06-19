@@ -65,6 +65,47 @@ def draw_face_square(img, gaze):
 
     return img
 
+# function to draw a green ideal square in the middle and check if the user face is in the frame
+def draw_ideal_square(img):
+    # draw ideal square
+    x_min = int(WIDTH_OF_PLAYGROUND / 2 - HEIGHT_OF_HUMAN_FACE / 2)
+    x_max = int(WIDTH_OF_PLAYGROUND / 2 + HEIGHT_OF_HUMAN_FACE / 2)
+    y_min = int(HEIGHT_OF_PLAYGROUND / 2 - HEIGHT_OF_HUMAN_FACE / 2)
+    y_max = int(HEIGHT_OF_PLAYGROUND / 2 + HEIGHT_OF_HUMAN_FACE / 2)
+    cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (0, 255, 0), 3)
+
+    return img
+
+# function to check if the face is in the ideal square
+def check_face_in_ideal_square(gaze):
+    face = gaze["face"]
+    x_min = int(WIDTH_OF_PLAYGROUND / 2 - HEIGHT_OF_HUMAN_FACE / 2)
+    x_max = int(WIDTH_OF_PLAYGROUND / 2 + HEIGHT_OF_HUMAN_FACE / 2)
+    y_min = int(HEIGHT_OF_PLAYGROUND / 2 - HEIGHT_OF_HUMAN_FACE / 2)
+    y_max = int(HEIGHT_OF_PLAYGROUND / 2 + HEIGHT_OF_HUMAN_FACE / 2)
+
+    if face["x"] - face["width"] / 2 > x_min and face["x"] + face["width"] / 2 < x_max and face["y"] - face["height"] / 2 > y_min and face["y"] + face["height"] / 2 < y_max:
+        return True
+    else:
+        return False
+
+# function to ask the use to align his face in the ideal square
+def align_face_in_ideal_square():
+    print("Please align your face in the green square in the middle of the playground.")
+    while True:
+        _, frame = cap.read()
+        frame = cv2.flip(frame, 1)
+        gazes = detect_gazes(frame)
+        if len(gazes) > 0:
+            gaze = gazes[0]
+            draw_face_square(frame, gaze)
+            frame = draw_ideal_square(frame)
+            cv2.imshow("gaze calib", frame)
+            if check_face_in_ideal_square(gaze):
+                break
+
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
 
 def transform_coordinates(gaze_x_raw, gaze_y_raw, transformation_matrix, image_width, image_height):
     # Reshape the input array to the expected shape (1, 1, 2)
@@ -174,6 +215,9 @@ if __name__ == "__main__":
     # set frame size
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH_OF_PLAYGROUND)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT_OF_PLAYGROUND)
+
+    # setup face distance
+    align_face_in_ideal_square()
 
     # calibrate gaze mapping
     transformation_matrix = calibrate_gaze_mapping()
