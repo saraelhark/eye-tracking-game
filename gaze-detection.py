@@ -35,13 +35,13 @@ def detect_gazes(frame: np.ndarray):
 
 def calculate_gaze_point(gaze_x_raw, gaze_y_raw, image_width, image_height):
 
-    gaze_point_x = int(image_width / 2 + gaze_x_raw)
-    gaze_point_y = int(image_height / 2 + gaze_y_raw)
+    gaze_point_x = image_width / 2 + gaze_x_raw
+    gaze_point_y = image_height / 2 + gaze_y_raw
 
     return gaze_point_x, gaze_point_y
 
 
-def calculate_gaze_point_raw(gaze):
+def calculate_gaze_point_displacements(gaze):
     length_per_pixel = HEIGHT_OF_HUMAN_FACE / gaze["face"]["height"]
 
     dx = -DISTANCE_TO_OBJECT * np.tan(gaze['yaw']) / length_per_pixel
@@ -53,29 +53,42 @@ def calculate_gaze_point_raw(gaze):
 
     return dx, dy
 
+
 def draw_face_square(img, gaze):
     # draw face bounding box
     face = gaze["face"]
     x_min = int(face["x"] - face["width"] / 2)
     x_max = int(face["x"] + face["width"] / 2)
     y_min = int(face["y"] - face["height"] / 2)
-    y_max = int(face["y"] + face["height"] / 2)
+    y_max = int(face["y"] + face["height"] / 2) 
     cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (255, 0, 0), 3)
 
     return img
 
 
-def draw_gaze_point(img, gaze, x_scale, y_scale):
+def transform_coordinates(gaze_x_raw, gaze_y_raw, transformation_matrix, image_width, image_height):
+    # Reshape the input array to the expected shape (1, 1, 2)
+    input_array = np.array([[gaze_x_raw, gaze_y_raw]]).reshape(1, 1, 2)
+
+    # Apply the transformation matrix to the raw gaze point coordinates
+    adjusted_x, adjusted_y = cv2.perspectiveTransform(input_array, transformation_matrix)[0][0]
+
+    # Ensure the adjusted coordinates are within the frame boundaries
+    adjusted_x = max(0, min(adjusted_x, image_width - 1))
+    adjusted_y = max(0, min(adjusted_y, image_height - 1))
+
+    return int(adjusted_x), int(adjusted_y)
+
+
+def draw_gaze_point(img, gaze, transformation_matrix):
     image_height, image_width = img.shape[:2]
 
-    gaze_point_x, gaze_point_y = calculate_gaze_point_raw(gaze)
-
+    gaze_point_x, gaze_point_y = calculate_gaze_point_displacements(gaze)
     gaze_point_x, gaze_point_y = calculate_gaze_point(gaze_point_x, gaze_point_y, image_width, image_height)
 
-    print("gaze_point_x: ", gaze_point_x, " gaze_point_y: ", gaze_point_y)
+    print("Raw", "gaze_point_x: ", gaze_point_x, " gaze_point_y: ", gaze_point_y)
 
-    gaze_point_x = int(gaze_point_x * x_scale)
-    gaze_point_y = int(gaze_point_y * y_scale)
+    gaze_point_x, gaze_point_y = transform_coordinates(gaze_point_x, gaze_point_y, transformation_matrix, image_width, image_height)
     
     print("gaze_point_scaled_x: ", gaze_point_x, " gaze_point_scaled_y: ", gaze_point_y)
     
@@ -86,106 +99,55 @@ def draw_gaze_point(img, gaze, x_scale, y_scale):
     return img
 
 
+def calibrate_corner(corner_x, corner_y, corner_name):
+        image_height, image_width = HEIGHT_OF_PLAYGROUND, WIDTH_OF_PLAYGROUND
+        print(f"Look at the {corner_name} corner of the playground and press the spacebar.")
+        while True:
+            _, frame = cap.read()
+            frame = cv2.flip(frame, 1)
+            gazes = detect_gazes(frame)
+            if len(gazes) > 0:
+                gaze = gazes[0]
+                draw_face_square(frame, gaze)
+
+                # add a red dot in the target corner of the playground
+                cv2.circle(frame, (corner_x, corner_y), 20, (0, 0, 255), -1)
+
+                cv2.imshow("gaze calib", frame)
+
+                dx, dy = calculate_gaze_point_displacements(gaze)
+                gaze_x, gaze_y = calculate_gaze_point(dx, dy, image_width, image_height)
+
+                if cv2.waitKey(1) & 0xFF == ord(" "):
+                    return gaze_x, gaze_y
+
+
 def calibrate_gaze_mapping():
     image_height, image_width = HEIGHT_OF_PLAYGROUND, WIDTH_OF_PLAYGROUND
-    playground_width, playground_height = HEIGHT_OF_PLAYGROUND, WIDTH_OF_PLAYGROUND
 
-    print("Look at the top-left corner of the playground and press the spacebar.")
-    while True:
-        _, frame = cap.read()
-        frame = cv2.flip(frame, 1)
-        gazes = detect_gazes(frame)
-        if len(gazes) > 0:
-            gaze = gazes[0]
-            draw_face_square(frame, gaze)
-
-            # add a red dot in the top-left corner of the playground
-            cv2.circle(frame, (0, 0), 20, (0, 0, 255), -1)
-
-            cv2.imshow("gaze calib", frame)
-
-            dx, dy = calculate_gaze_point_raw(gaze)
-            gaze_x, gaze_y = calculate_gaze_point(dx, dy, image_width, image_height)
-
-            if cv2.waitKey(1) & 0xFF == ord(" "):
-                top_left_x, top_left_y = gaze_x, gaze_y
-                break
-
-    # Repeat the process for the other three corners
-    print("Look at the top-right corner of the playground and press the spacebar.")
-    while True:
-        _, frame = cap.read()
-        frame = cv2.flip(frame, 1)
-        gazes = detect_gazes(frame)
-        if len(gazes) > 0:
-            gaze = gazes[0]
-            draw_face_square(frame, gaze)
-
-            # add a red dot in the top-right corner of the playground
-            cv2.circle(frame, (image_width, 0), 20, (0, 0, 255), -1)
-
-            cv2.imshow("gaze calib", frame)
-
-            dx, dy = calculate_gaze_point_raw(gaze)
-            gaze_x, gaze_y = calculate_gaze_point(dx, dy, image_width, image_height)
-
-            if cv2.waitKey(1) & 0xFF == ord(" "):
-                top_right_x, top_right_y  = gaze_x, gaze_y
-                break
-    
-
-    print("Look at the bottom-left corner of the playground and press the spacebar.")
-    while True:
-        _, frame = cap.read()
-        frame = cv2.flip(frame, 1)
-        gazes = detect_gazes(frame)
-        if len(gazes) > 0:
-            gaze = gazes[0]
-            draw_face_square(frame, gaze)
-
-            # add a red dot in the bottom-left corner of the playground
-            cv2.circle(frame, (0, image_height), 20, (0, 0, 255), -1)
-
-            cv2.imshow("gaze calib", frame)
-
-            dx, dy = calculate_gaze_point_raw(gaze)
-            gaze_x, gaze_y = calculate_gaze_point(dx, dy, image_width, image_height)
-
-            if cv2.waitKey(1) & 0xFF == ord(" "):
-                bottom_left_x, bottom_left_y = gaze_x, gaze_y
-                break
-
-    print("Look at the bottom-right corner of the playground and press the spacebar.")
-    while True:
-        _, frame = cap.read()
-        frame = cv2.flip(frame, 1)
-        gazes = detect_gazes(frame)
-        if len(gazes) > 0:
-            gaze = gazes[0]
-            draw_face_square(frame, gaze)
-
-            # add a red dot in the bottom-right corner of the playground
-            cv2.circle(frame, (image_width, image_height), 20, (0, 0, 255), -1)
-
-            cv2.imshow("gaze calib", frame)
-
-            dx, dy = calculate_gaze_point_raw(gaze)
-            gaze_x, gaze_y = calculate_gaze_point(dx, dy, image_width, image_height)
-
-            if cv2.waitKey(1) & 0xFF == ord(" "):
-                bottom_right_x, bottom_right_y = gaze_x, gaze_y
-                break
+    top_left_x, top_left_y = calibrate_corner(0, 0, "top-left")
+    top_right_x, top_right_y = calibrate_corner(image_width, 0, "top-right")
+    bottom_left_x, bottom_left_y = calibrate_corner(0, image_height, "bottom-left")
+    bottom_right_x, bottom_right_y = calibrate_corner(image_width, image_height, "bottom-right")
     
     # close the window
     cv2.destroyAllWindows()
 
-    # Calculate the scaling factors
-    x_scale = playground_width / (top_right_x - top_left_x) / 2
-    y_scale = playground_height / (bottom_left_y - top_left_y) / 2
+    # Define the source and destination points
+    src_points = np.float32([[top_left_x, top_left_y],
+                             [top_right_x, top_right_y],
+                             [bottom_left_x, bottom_left_y],
+                             [bottom_right_x, bottom_right_y]])
 
-    print("Calibration complete. x_scale: ", x_scale, " y_scale: ", y_scale)
+    dst_points = np.float32([[0, 0],
+                             [image_width, 0],
+                             [0, image_height],
+                             [image_width, image_height]])
 
-    return x_scale, y_scale
+    # Calculate the transformation matrix
+    transformation_matrix = cv2.getPerspectiveTransform(src_points, dst_points)
+
+    return transformation_matrix
 
 
 if __name__ == "__main__":
@@ -200,9 +162,7 @@ if __name__ == "__main__":
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT_OF_PLAYGROUND)
 
     # calibrate gaze mapping
-    # x_scale, y_scale = calibrate_gaze_mapping()
-
-    x_scale, y_scale = 1, 1
+    transformation_matrix = calibrate_gaze_mapping()
 
     while True:
         _, frame = cap.read()
@@ -220,7 +180,7 @@ if __name__ == "__main__":
         # draw face square and gaze point
         frame = draw_face_square(frame, gaze)
 
-        frame = draw_gaze_point(frame, gaze, x_scale, y_scale)
+        frame = draw_gaze_point(frame, gaze, transformation_matrix)
 
         cv2.imshow("gaze", frame)
 
