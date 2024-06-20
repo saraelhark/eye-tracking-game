@@ -2,9 +2,10 @@ import cv2
 import numpy as np
 from config import WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND, GAZE_HISTORY_WINDOW_SIZE
 from gaze_detection import process_frame
-from coordinate_transform import calculate_gaze_point_displacements, calculate_gaze_point, transform_coordinates, apply_moving_average_filter, apply_median_filter, adaptive_weighted_moving_average
+from coordinate_transform import *
 from visualization import draw_face_square, draw_gaze_point, display_frame, flip_frame
 from calibration import perform_calibration
+
 
 def main():
     cap = cv2.VideoCapture(0)
@@ -23,6 +24,10 @@ def main():
     # Initialize gaze history for smoothing
     gaze_history = []
     window_size = GAZE_HISTORY_WINDOW_SIZE
+
+    # Initialize Kalman filter with the center of the image
+    initial_state = [WIDTH_OF_PLAYGROUND // 2, HEIGHT_OF_PLAYGROUND // 2]
+    kalman_filter = KalmanFilter(initial_state)
 
     while True:
         _, frame = cap.read()
@@ -51,7 +56,13 @@ def main():
         #filtered_x, filtered_y = apply_median_filter(gaze_history, (gaze_x, gaze_y), window_size)
 
         #filtered_x, filtered_y = adaptive_weighted_moving_average(gaze_history, (gaze_x, gaze_y), window_size)
-    
+
+        filtered_point = kalman_filter.update(np.array([gaze_x, gaze_y]))
+
+        filtered_x, filtered_y = map(int, filtered_point)
+
+        filtered_x = max(0, min(filtered_x, WIDTH_OF_PLAYGROUND - 1))
+        filtered_y = max(0, min(filtered_y, HEIGHT_OF_PLAYGROUND - 1))
 
         print(f"Raw gaze point: ({gaze_x}, {gaze_y})")
         print(f"Filtered gaze point: ({filtered_x}, {filtered_y})")
