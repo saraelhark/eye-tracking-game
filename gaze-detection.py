@@ -184,13 +184,14 @@ def calibrate_corner(corner_x, corner_y, corner_name):
                 if cv2.waitKey(1) & 0xFF == ord(" "):
                     return gaze_x, gaze_y
 
+NR_SAMPLES = 3
 
 def calibrate_gaze_mapping():
     image_height, image_width = HEIGHT_OF_PLAYGROUND, WIDTH_OF_PLAYGROUND
 
     top_left_x = []
     top_left_y = []
-    for _ in range(4):
+    for _ in range(NR_SAMPLES):
         x, y = calibrate_corner(0, 0, "top-left")
         top_left_x.append(x)
         top_left_y.append(y)
@@ -199,7 +200,7 @@ def calibrate_gaze_mapping():
 
     top_right_x = []
     top_right_y = []
-    for _ in range(4):
+    for _ in range(NR_SAMPLES):
         x, y = calibrate_corner(image_width, 0, "top-right")
         top_right_x.append(x)
         top_right_y.append(y)
@@ -208,7 +209,7 @@ def calibrate_gaze_mapping():
 
     bottom_left_x = []
     bottom_left_y = []
-    for _ in range(4):
+    for _ in range(NR_SAMPLES):
         x, y = calibrate_corner(0, image_height, "bottom-left")
         bottom_left_x.append(x)
         bottom_left_y.append(y)
@@ -217,12 +218,21 @@ def calibrate_gaze_mapping():
 
     bottom_right_x = []
     bottom_right_y = []
-    for _ in range(4):
+    for _ in range(NR_SAMPLES):
         x, y = calibrate_corner(image_width, image_height, "bottom-right")
         bottom_right_x.append(x)
         bottom_right_y.append(y)
     bottom_right_x = int(sum(bottom_right_x) / len(bottom_right_x))
     bottom_right_y = int(sum(bottom_right_y) / len(bottom_right_y))
+
+    middle_x = []
+    middle_y = []
+    for _ in range(NR_SAMPLES):
+        x, y = calibrate_corner(image_width // 2, image_height // 2, "middle")
+        middle_x.append(x)
+        middle_y.append(y)
+    middle_x = int(sum(middle_x) / len(middle_x))
+    middle_y = int(sum(middle_y) / len(middle_y))
     
     # close the window
     cv2.destroyAllWindows()
@@ -231,15 +241,17 @@ def calibrate_gaze_mapping():
     src_points = np.float32([[top_left_x, top_left_y],
                              [top_right_x, top_right_y],
                              [bottom_left_x, bottom_left_y],
-                             [bottom_right_x, bottom_right_y]])
+                             [bottom_right_x, bottom_right_y],
+                             [middle_x, middle_y]])
 
     dst_points = np.float32([[0, 0],
                              [image_width, 0],
                              [0, image_height],
-                             [image_width, image_height]])
+                             [image_width, image_height],
+                             [image_width // 2, image_height // 2]])
 
     # Calculate the transformation matrix
-    transformation_matrix = cv2.getPerspectiveTransform(src_points, dst_points)
+    transformation_matrix, _ = cv2.findHomography(src_points, dst_points)
 
     return transformation_matrix
 
