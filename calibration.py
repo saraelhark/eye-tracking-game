@@ -42,6 +42,8 @@ def align_face_in_ideal_square(cap):
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
+    cv2.destroyAllWindows()
+
 def calibrate_corner(cap, corner_x, corner_y, corner_name):
     print(f"Look at the {corner_name} corner of the playground and press the spacebar.")
     gaze_points = []
@@ -91,7 +93,6 @@ def calibrate_gaze_mapping(cap):
     return transformation_matrix
 
 def perform_calibration(cap):
-    align_face_in_ideal_square(cap)
     transformation_matrix = calibrate_gaze_mapping(cap)
     cv2.destroyAllWindows()
     return transformation_matrix

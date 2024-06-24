@@ -1,11 +1,9 @@
 import cv2
 import numpy as np
-from config import WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND, GAZE_HISTORY_WINDOW_SIZE
-from gaze_detection import process_frame
+from config import WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND
 from coordinate_transform import *
-from visualization import draw_face_square, draw_gaze_point, display_frame, flip_frame
-from calibration import perform_calibration
-
+from calibration import perform_calibration, align_face_in_ideal_square
+from gaze_detection import eyes_tracking_positions
 
 def main():
     cap = cv2.VideoCapture(0)
@@ -18,66 +16,16 @@ def main():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH_OF_PLAYGROUND)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT_OF_PLAYGROUND)
 
+    # check face position
+    align_face_in_ideal_square(cap)
+
     # Calibrate gaze mapping
     transformation_matrix = perform_calibration(cap)
 
-    # Initialize gaze history for smoothing
-    gaze_history = []
-    window_size = GAZE_HISTORY_WINDOW_SIZE
+    eyes_tracking_positions(cap, transformation_matrix)
 
-    # Initialize Kalman filter with the center of the image
-    initial_state = [WIDTH_OF_PLAYGROUND // 2, HEIGHT_OF_PLAYGROUND // 2]
-    kalman_filter = KalmanFilter(initial_state)
 
-    while True:
-        _, frame = cap.read()
-        frame = flip_frame(frame)
-
-        gaze_data_list = process_frame(frame)
-
-        if not gaze_data_list:
-            continue
-
-        gaze = gaze_data_list[0]  # Assuming we're only interested in the first detected gaze
-
-        # Draw face square
-        frame = draw_face_square(frame, gaze)
-
-        # Calculate gaze point
-        dx, dy = calculate_gaze_point_displacements(gaze)
-        gaze_x, gaze_y = calculate_gaze_point(dx, dy, WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND)
-
-        # Transform coordinates
-        gaze_x, gaze_y = transform_coordinates(gaze_x, gaze_y, transformation_matrix, WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND)
-
-        # Apply moving average filter
-        #filtered_x, filtered_y = apply_moving_average_filter(gaze_history, (gaze_x, gaze_y), window_size)
-
-        #filtered_x, filtered_y = apply_median_filter(gaze_history, (gaze_x, gaze_y), window_size)
-
-        #filtered_x, filtered_y = adaptive_weighted_moving_average(gaze_history, (gaze_x, gaze_y), window_size)
-
-        filtered_point = kalman_filter.update(np.array([gaze_x, gaze_y]))
-
-        filtered_x, filtered_y = map(int, filtered_point)
-
-        filtered_x = max(0, min(filtered_x, WIDTH_OF_PLAYGROUND - 1))
-        filtered_y = max(0, min(filtered_y, HEIGHT_OF_PLAYGROUND - 1))
-
-        print(f"Raw gaze point: ({gaze_x}, {gaze_y})")
-        print(f"Filtered gaze point: ({filtered_x}, {filtered_y})")
-
-        # Draw gaze point
-        frame = draw_gaze_point(frame, (filtered_x, filtered_y))
-
-        # Display the frame
-        display_frame("Gaze Tracking", frame)
-
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
+    
 
 if __name__ == "__main__":
     main()
