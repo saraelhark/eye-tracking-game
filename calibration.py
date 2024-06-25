@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 import time
 from config import *
-from gaze_detection import detect_gazes
-from coordinate_transform import calculate_gaze_point_displacements, calculate_gaze_point
+from gaze_detection import detect_gazes, draw_gaze_point
+from coordinate_transform import calculate_gaze_point_displacements, calculate_gaze_point, transform_coordinates
 from visualization import draw_face_square, draw_ideal_square, draw_calibration_point
 from video import video_loop
 
@@ -113,3 +113,76 @@ class CalibrateGazeMapping:
         cv2.destroyAllWindows()
         return transformation_matrix
 
+
+class CheckGazeAccuracy:
+    def __init__(self, cap, transformation_matrix):
+        self.cap = cap
+        self.transformation_matrix = transformation_matrix
+        self.gaze_points = []
+        self.target_points = [(100, 100)]#, (WIDTH_OF_PLAYGROUND - 100, HEIGHT_OF_PLAYGROUND - 100)]
+        self.target_index = 0
+        self.target_start_time = None
+        self.target_duration = 5  # Seconds
+        self.started = False
+
+    def frame_processing_func(self, frame):
+        gazes = detect_gazes(frame)
+        if len(gazes) > 0:
+            gaze = gazes[0]
+            frame = draw_face_square(frame, gaze)
+
+            dx, dy = calculate_gaze_point_displacements(gaze)
+            gaze_x, gaze_y = calculate_gaze_point(dx, dy, WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND)
+            gaze_x, gaze_y = transform_coordinates(gaze_x, gaze_y, self.transformation_matrix, WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND)
+
+            target_x, target_y = self.target_points[self.target_index]
+            draw_calibration_point(frame, (target_x, target_y))
+
+            # Draw gaze point
+            frame = draw_gaze_point(frame, (gaze_x, gaze_y))
+
+            if self.started:
+                self.gaze_points.append((gaze_x, gaze_y))
+
+                if self.target_start_time is None:
+                    self.target_start_time = time.time()
+                elif time.time() - self.target_start_time >= self.target_duration:
+                    self.target_index += 1
+                    self.target_start_time = None
+                    if self.target_index >= len(self.target_points):
+                        self.started = False
+                        return frame, True
+
+        if cv2.waitKey(1) & 0xFF == ord(" "):
+            self.started = True
+            self.gaze_points = []
+
+        return frame, self.target_index > len(self.target_points) and self.started
+
+    def run(self):
+        print("Press the spacebar to start. Look at the two points on the screen for 5 seconds each.")
+        video_loop(self.cap, self.frame_processing_func, "Gaze Accuracy Check")
+
+        # Calculate the accuracy
+        accuracy = self.calculate_accuracy()
+        if accuracy > 0.0:
+            print(f"Gaze detection accuracy: {accuracy:.2f}%")
+        else:
+            print("Gaze detection accuracy could not be calculated. Please try the calibration again.")
+
+        return accuracy
+
+    def calculate_accuracy(self):
+        if not self.gaze_points:
+            return 0.0
+
+        total_distance = 0
+        for gaze_x, gaze_y in self.gaze_points:
+            for target_x, target_y in self.target_points:
+                distance = np.sqrt((gaze_x - target_x) ** 2 + (gaze_y - target_y) ** 2)
+                total_distance += distance
+
+        avg_distance = total_distance / (len(self.gaze_points) * len(self.target_points))
+        max_distance = np.sqrt(WIDTH_OF_PLAYGROUND ** 2 + HEIGHT_OF_PLAYGROUND ** 2)
+        accuracy = (1 - avg_distance / max_distance) * 100
+        return accuracy

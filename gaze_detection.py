@@ -86,3 +86,4 @@ class EyesTrackingPositions:
 
     def run(self):
         video_loop(self.cap, self.detect_draw_gaze, "Gaze Tracking")
+
