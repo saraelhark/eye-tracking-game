@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from config import WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND
 from coordinate_transform import *
-from calibration import perform_calibration, align_face_in_ideal_square
+from calibration import CalibrateGazeMapping, AlignFace
 from gaze_detection import eyes_tracking_positions
 
 def main():
@@ -17,10 +17,12 @@ def main():
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT_OF_PLAYGROUND)
 
     # check face position
-    align_face_in_ideal_square(cap)
+    aligner = AlignFace(cap)
+    aligner.run()
 
     # Calibrate gaze mapping
-    transformation_matrix = perform_calibration(cap)
+    calibrator = CalibrateGazeMapping(cap)
+    transformation_matrix = calibrator.perform_calibration()
 
     eyes_tracking_positions(cap, transformation_matrix)
 

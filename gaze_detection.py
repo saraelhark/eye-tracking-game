@@ -41,23 +41,6 @@ def detect_gazes(frame: np.ndarray):
         print(f"Error in gaze detection: {response.status_code} - {response.text}")
         return []
 
-def get_gaze_data(gaze):
-    """
-    Extract relevant gaze data from the gaze prediction.
-
-    Args:
-    gaze (dict): The gaze prediction dictionary.
-
-    Returns:
-    dict: A dictionary containing relevant gaze data (yaw, pitch, face).
-    """
-    return {
-        "yaw": gaze.get("yaw", 0),
-        "pitch": gaze.get("pitch", 0),
-        "face": gaze.get("face", {})
-    }
-
-
 
 def eyes_tracking_positions(cap, transformation_matrix):
     # Initialize gaze history for smoothing
