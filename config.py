@@ -26,8 +26,8 @@ GAZE_HISTORY_WINDOW_SIZE = 5  # Number of points to use for moving average
 # Colors (in BGR format for OpenCV)
 FACE_SQUARE_COLOR = (255, 0, 0)  # Blue
 IDEAL_SQUARE_COLOR = (0, 255, 0)  # Green
-GAZE_POINT_COLOR = (0, 0, 255)  # Red
-CALIBRATION_POINT_COLOR = (0, 255, 0)  # Green
+GAZE_POINT_COLOR = (0, 255, 0)  # Green
+CALIBRATION_POINT_COLOR = (0, 0, 255)  # Red
 
 # Drawing parameters
 FACE_SQUARE_THICKNESS = 3

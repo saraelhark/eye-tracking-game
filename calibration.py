@@ -3,7 +3,7 @@ import numpy as np
 import time
 from config import *
 from gaze_detection import detect_gazes, draw_gaze_point
-from coordinate_transform import calculate_gaze_point_displacements, calculate_gaze_point, transform_coordinates
+from coordinate_transform import *
 from visualization import draw_face_square, draw_ideal_square, draw_calibration_point
 from video import video_loop
 
@@ -113,6 +113,8 @@ class CalibrateGazeMapping:
         cv2.destroyAllWindows()
         return transformation_matrix
 
+PROCESS_NOISE = 1e-3
+MEASUREMENT_NOISE = 0.3
 
 class CheckGazeAccuracyForTarget:
     def __init__(self, cap, transformation_matrix, target_point):
@@ -123,6 +125,9 @@ class CheckGazeAccuracyForTarget:
         self.target_start_time = None
         self.target_duration = 5  # Seconds
         self.started = False
+
+        self.gaze_history = []
+        self.kalman_filter = KalmanFilter([WIDTH_OF_PLAYGROUND // 2, HEIGHT_OF_PLAYGROUND // 2], PROCESS_NOISE, MEASUREMENT_NOISE)
 
     def frame_processing_func(self, frame):
         gazes = detect_gazes(frame)
@@ -136,6 +141,10 @@ class CheckGazeAccuracyForTarget:
 
             target_x, target_y = self.target_point
             draw_calibration_point(frame, (target_x, target_y))
+
+            # add kalman filter
+            filtered_point = self.kalman_filter.update(np.array([gaze_x, gaze_y]))
+            gaze_x, gaze_y = map(int, filtered_point)
 
             # Draw gaze point
             frame = draw_gaze_point(frame, (gaze_x, gaze_y))
