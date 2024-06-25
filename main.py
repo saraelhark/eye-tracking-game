@@ -3,7 +3,7 @@ import numpy as np
 from config import WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND
 from coordinate_transform import *
 from calibration import CalibrateGazeMapping, AlignFace
-from gaze_detection import eyes_tracking_positions
+from gaze_detection import EyesTrackingPositions
 
 def main():
     cap = cv2.VideoCapture(0)
@@ -24,8 +24,9 @@ def main():
     calibrator = CalibrateGazeMapping(cap)
     transformation_matrix = calibrator.perform_calibration()
 
-    eyes_tracking_positions(cap, transformation_matrix)
-
+    # Detect and track eyes
+    eyes_tracker = EyesTrackingPositions(cap, transformation_matrix)
+    eyes_tracker.run()
 
     
 

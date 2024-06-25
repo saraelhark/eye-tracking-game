@@ -42,20 +42,19 @@ def detect_gazes(frame: np.ndarray):
         return []
 
 
-def eyes_tracking_positions(cap, transformation_matrix):
-    # Initialize gaze history for smoothing
-    gaze_history = []
-    window_size = GAZE_HISTORY_WINDOW_SIZE
+class EyesTrackingPositions:
+    def __init__(self, cap, transformation_matrix):
+        self.cap = cap
+        self.transformation_matrix = transformation_matrix
+        self.gaze_history = []
+        self.window_size = GAZE_HISTORY_WINDOW_SIZE
+        self.kalman_filter = KalmanFilter([WIDTH_OF_PLAYGROUND // 2, HEIGHT_OF_PLAYGROUND // 2])
 
-    # Initialize Kalman filter with the center of the image
-    initial_state = [WIDTH_OF_PLAYGROUND // 2, HEIGHT_OF_PLAYGROUND // 2]
-    kalman_filter = KalmanFilter(initial_state)
-
-    def detect_draw_gaze(frame):
+    def detect_draw_gaze(self, frame):
         gaze_data_list = detect_gazes(frame)
 
         if not gaze_data_list:
-            return None
+            return frame, False
 
         gaze = gaze_data_list[0]  # Assuming we're only interested in the first detected gaze
 
@@ -67,16 +66,10 @@ def eyes_tracking_positions(cap, transformation_matrix):
         gaze_x, gaze_y = calculate_gaze_point(dx, dy, WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND)
 
         # Transform coordinates
-        gaze_x, gaze_y = transform_coordinates(gaze_x, gaze_y, transformation_matrix, WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND)
+        gaze_x, gaze_y = transform_coordinates(gaze_x, gaze_y, self.transformation_matrix, WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND)
 
-        # Apply moving average filter
-        #filtered_x, filtered_y = apply_moving_average_filter(gaze_history, (gaze_x, gaze_y), window_size)
-
-        #filtered_x, filtered_y = apply_median_filter(gaze_history, (gaze_x, gaze_y), window_size)
-
-        #filtered_x, filtered_y = adaptive_weighted_moving_average(gaze_history, (gaze_x, gaze_y), window_size)
-
-        filtered_point = kalman_filter.update(np.array([gaze_x, gaze_y]))
+        # Apply Kalman filter
+        filtered_point = self.kalman_filter.update(np.array([gaze_x, gaze_y]))
 
         filtered_x, filtered_y = map(int, filtered_point)
 
@@ -89,7 +82,7 @@ def eyes_tracking_positions(cap, transformation_matrix):
         # Draw gaze point
         frame = draw_gaze_point(frame, (filtered_x, filtered_y))
 
-        return frame
+        return frame, False
 
-    video_loop(cap, detect_draw_gaze, "Gaze Tracking")
-
+    def run(self):
+        video_loop(self.cap, self.detect_draw_gaze, "Gaze Tracking")
