@@ -114,13 +114,12 @@ class CalibrateGazeMapping:
         return transformation_matrix
 
 
-class CheckGazeAccuracy:
-    def __init__(self, cap, transformation_matrix):
+class CheckGazeAccuracyForTarget:
+    def __init__(self, cap, transformation_matrix, target_point):
         self.cap = cap
         self.transformation_matrix = transformation_matrix
+        self.target_point = target_point
         self.gaze_points = []
-        self.target_points = [(100, 100)]#, (WIDTH_OF_PLAYGROUND - 100, HEIGHT_OF_PLAYGROUND - 100)]
-        self.target_index = 0
         self.target_start_time = None
         self.target_duration = 5  # Seconds
         self.started = False
@@ -135,7 +134,7 @@ class CheckGazeAccuracy:
             gaze_x, gaze_y = calculate_gaze_point(dx, dy, WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND)
             gaze_x, gaze_y = transform_coordinates(gaze_x, gaze_y, self.transformation_matrix, WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND)
 
-            target_x, target_y = self.target_points[self.target_index]
+            target_x, target_y = self.target_point
             draw_calibration_point(frame, (target_x, target_y))
 
             # Draw gaze point
@@ -147,42 +146,53 @@ class CheckGazeAccuracy:
                 if self.target_start_time is None:
                     self.target_start_time = time.time()
                 elif time.time() - self.target_start_time >= self.target_duration:
-                    self.target_index += 1
-                    self.target_start_time = None
-                    if self.target_index >= len(self.target_points):
-                        self.started = False
-                        return frame, True
+                    self.started = False
+                    return frame, True
 
         if cv2.waitKey(1) & 0xFF == ord(" "):
             self.started = True
             self.gaze_points = []
 
-        return frame, self.target_index > len(self.target_points) and self.started
+        return frame, False
 
     def run(self):
-        print("Press the spacebar to start. Look at the two points on the screen for 5 seconds each.")
+        print(f"Look at the target point and press the spacebar to start. Hold for {self.target_duration} seconds.")
         video_loop(self.cap, self.frame_processing_func, "Gaze Accuracy Check")
 
-        # Calculate the accuracy
         accuracy = self.calculate_accuracy()
-        if accuracy > 0.0:
-            print(f"Gaze detection accuracy: {accuracy:.2f}%")
-        else:
-            print("Gaze detection accuracy could not be calculated. Please try the calibration again.")
-
+        print(f"Accuracy for this target: {accuracy:.2f}%")
         return accuracy
 
     def calculate_accuracy(self):
         if not self.gaze_points:
             return 0.0
 
+        target_x, target_y = self.target_point
         total_distance = 0
         for gaze_x, gaze_y in self.gaze_points:
-            for target_x, target_y in self.target_points:
-                distance = np.sqrt((gaze_x - target_x) ** 2 + (gaze_y - target_y) ** 2)
-                total_distance += distance
+            distance = np.sqrt((gaze_x - target_x) ** 2 + (gaze_y - target_y) ** 2)
+            total_distance += distance
 
-        avg_distance = total_distance / (len(self.gaze_points) * len(self.target_points))
+        avg_distance = total_distance / len(self.gaze_points)
         max_distance = np.sqrt(WIDTH_OF_PLAYGROUND ** 2 + HEIGHT_OF_PLAYGROUND ** 2)
         accuracy = (1 - avg_distance / max_distance) * 100
         return accuracy
+
+
+class CheckGazeAccuracy:
+    def __init__(self, cap, transformation_matrix, target_points):
+        self.cap = cap
+        self.transformation_matrix = transformation_matrix
+        self.target_points = target_points
+        self.overall_accuracy = 0.0
+
+    def run(self):
+        print("Press the spacebar to start the accuracy check.")
+        for target_point in self.target_points:
+            checker = CheckGazeAccuracyForTarget(self.cap, self.transformation_matrix, target_point)
+            accuracy = checker.run()
+            self.overall_accuracy += accuracy
+
+        self.overall_accuracy /= len(self.target_points)
+        print(f"Overall gaze detection accuracy: {self.overall_accuracy:.2f}%")
+        return self.overall_accuracy

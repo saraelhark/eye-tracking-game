@@ -25,7 +25,8 @@ def main():
     transformation_matrix = calibrator.perform_calibration()
 
     # step 3: check calibration accuracy
-    accuracy_checker = CheckGazeAccuracy(cap, transformation_matrix)
+    target_points = [(100, 100), (WIDTH_OF_PLAYGROUND - 100, HEIGHT_OF_PLAYGROUND - 100)]
+    accuracy_checker = CheckGazeAccuracy(cap, transformation_matrix, target_points)
     accuracy_checker.run()
 
     # step 4: detect and track eyes with filtering
