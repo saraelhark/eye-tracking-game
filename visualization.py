@@ -66,24 +66,3 @@ def draw_calibration_point(img, point):
     cv2.circle(img, point, CALIBRATION_POINT_RADIUS, CALIBRATION_POINT_COLOR, -1)
     return img
 
-def display_frame(window_name, frame):
-    """
-    Display a frame in a named window.
-    
-    Args:
-    window_name (str): The name of the window to display the frame in.
-    frame (numpy.ndarray): The frame to display.
-    """
-    cv2.imshow(window_name, frame)
-
-def flip_frame(frame):
-    """
-    Flip the frame horizontally.
-    
-    Args:
-    frame (numpy.ndarray): The frame to flip.
-    
-    Returns:
-    numpy.ndarray: The flipped frame.
-    """
-    return cv2.flip(frame, 1)

@@ -4,7 +4,8 @@ import time
 from config import *
 from gaze_detection import detect_gazes
 from coordinate_transform import calculate_gaze_point_displacements, calculate_gaze_point
-from visualization import draw_face_square, draw_ideal_square, draw_calibration_point, display_frame, flip_frame
+from visualization import draw_face_square, draw_ideal_square, draw_calibration_point
+from video import video_loop
 
 def check_face_in_ideal_square(gaze):
     face = gaze["face"]
@@ -21,49 +22,45 @@ def check_face_in_ideal_square(gaze):
 def align_face_in_ideal_square(cap):
     print("Please align your face in the green square in the middle of the playground for 5 seconds.")
     start_time = None
-    while True:
-        _, frame = cap.read()
-        frame = flip_frame(frame)
+
+    def frame_processing_func(frame, start_time):
         gazes = detect_gazes(frame)
         if len(gazes) > 0:
             gaze = gazes[0]
             draw_face_square(frame, gaze)
             draw_ideal_square(frame)
-            display_frame("gaze calib", frame)
-            
             if check_face_in_ideal_square(gaze):
                 if start_time is None:
                     start_time = time.time()
                 elif time.time() - start_time >= FACE_ALIGNMENT_TIME:
-                    break
+                    return frame, start_time
             else:
                 start_time = None
-        
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+        return frame, start_time
 
-    cv2.destroyAllWindows()
+    video_loop(cap, lambda frame: frame_processing_func(frame, start_time), "Align Face in Ideal Square")
+
 
 def calibrate_corner(cap, corner_x, corner_y, corner_name):
     print(f"Look at the {corner_name} corner of the playground and press the spacebar.")
     gaze_points = []
-    while len(gaze_points) < CALIBRATION_POINTS:
-        _, frame = cap.read()
-        frame = flip_frame(frame)
+
+    def frame_processing_func(frame):
         gazes = detect_gazes(frame)
         if len(gazes) > 0:
             gaze = gazes[0]
             draw_face_square(frame, gaze)
             draw_calibration_point(frame, (corner_x, corner_y))
-            display_frame("gaze calib", frame)
-
             if cv2.waitKey(1) & 0xFF == ord(" "):
                 dx, dy = calculate_gaze_point_displacements(gaze)
                 gaze_x, gaze_y = calculate_gaze_point(dx, dy, WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND)
                 gaze_points.append((gaze_x, gaze_y))
                 print(f"Calibration point {len(gaze_points)} captured.")
+        return frame
 
+    video_loop(cap, frame_processing_func, "Gaze Calibration", False)
     return np.mean(gaze_points, axis=0)
+
 
 def calibrate_gaze_mapping(cap):
     corners = [

@@ -4,7 +4,8 @@ import numpy as np
 import requests
 from config import *
 from coordinate_transform import *
-from visualization import draw_face_square, draw_gaze_point, display_frame, flip_frame
+from visualization import draw_face_square, draw_gaze_point
+from video import video_loop
 
 def detect_gazes(frame: np.ndarray):
     """
@@ -56,18 +57,6 @@ def get_gaze_data(gaze):
         "face": gaze.get("face", {})
     }
 
-def process_frame(frame):
-    """
-    Process a frame to detect gazes and extract gaze data.
-
-    Args:
-    frame (numpy.ndarray): The input frame to process.
-
-    Returns:
-    list: A list of processed gaze data dictionaries.
-    """
-    gazes = detect_gazes(frame)
-    return [get_gaze_data(gaze) for gaze in gazes]
 
 
 def eyes_tracking_positions(cap, transformation_matrix):
@@ -79,14 +68,11 @@ def eyes_tracking_positions(cap, transformation_matrix):
     initial_state = [WIDTH_OF_PLAYGROUND // 2, HEIGHT_OF_PLAYGROUND // 2]
     kalman_filter = KalmanFilter(initial_state)
 
-    while True:
-        _, frame = cap.read()
-        frame = flip_frame(frame)
-
-        gaze_data_list = process_frame(frame)
+    def detect_draw_gaze(frame):
+        gaze_data_list = detect_gazes(frame)
 
         if not gaze_data_list:
-            continue
+            return None
 
         gaze = gaze_data_list[0]  # Assuming we're only interested in the first detected gaze
 
@@ -120,11 +106,7 @@ def eyes_tracking_positions(cap, transformation_matrix):
         # Draw gaze point
         frame = draw_gaze_point(frame, (filtered_x, filtered_y))
 
-        # Display the frame
-        display_frame("Gaze Tracking", frame)
+        return frame
 
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+    video_loop(cap, detect_draw_gaze, "Gaze Tracking")
 
-    cap.release()
-    cv2.destroyAllWindows()
