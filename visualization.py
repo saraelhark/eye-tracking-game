@@ -125,8 +125,8 @@ def show_timer(img, timer):
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 0.8
     thickness = 2
-    text_x = 600
-    text_y = 460
+    text_x = WIDTH_OF_PLAYGROUND - 100
+    text_y = HEIGHT_OF_PLAYGROUND - 20
     text_color = (0, 0, 255)
 
     cv2.putText(img, timer, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)

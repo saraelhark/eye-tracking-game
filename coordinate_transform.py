@@ -138,13 +138,16 @@ def adaptive_weighted_moving_average(gaze_history, new_point, max_window_size=10
     
     return filtered_x, filtered_y
 
+PROCESS_NOISE = 1e-3
+MEASUREMENT_NOISE = 0.3
+
 class KalmanFilter:
-    def __init__(self, initial_state, process_noise=1e-3, measurement_noise=0.1):
+    def __init__(self, initial_state, process_noise=PROCESS_NOISE, measurement_noise=MEASUREMENT_NOISE):
         self.kf = cv2.KalmanFilter(4, 2)
         self.kf.measurementMatrix = np.array([[1, 0, 0, 0],
                                               [0, 1, 0, 0]], np.float32)
-        self.kf.transitionMatrix = np.array([[1, 0, 1, 0],
-                                             [0, 1, 0, 1],
+        self.kf.transitionMatrix = np.array([[1, 0, 0.5, 0],
+                                             [0, 1, 0, 0.5],
                                              [0, 0, 1, 0],
                                              [0, 0, 0, 1]], np.float32)
         self.kf.processNoiseCov = np.eye(4, dtype=np.float32) * process_noise
@@ -160,5 +163,8 @@ class KalmanFilter:
         measurement = np.array([[measurement[0]], [measurement[1]]], dtype=np.float32)
         predicted = self.kf.predict()
         updated = self.kf.correct(measurement)
+        # print(measurement[:2].flatten())
+        # print(predicted[:2].flatten())
+        # print(updated[:2].flatten())
         return updated[:2].flatten()
     

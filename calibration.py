@@ -114,8 +114,6 @@ class CalibrateGazeMapping:
         cv2.destroyAllWindows()
         return transformation_matrix
 
-PROCESS_NOISE = 1e-3
-MEASUREMENT_NOISE = 0.3
 
 class CheckGazeAccuracyForTarget:
     def __init__(self, cap, transformation_matrix, target_point):
@@ -128,7 +126,7 @@ class CheckGazeAccuracyForTarget:
         self.started = False
 
         self.gaze_history = []
-        self.kalman_filter = KalmanFilter([WIDTH_OF_PLAYGROUND // 2, HEIGHT_OF_PLAYGROUND // 2], PROCESS_NOISE, MEASUREMENT_NOISE)
+        self.kalman_filter = KalmanFilter([WIDTH_OF_PLAYGROUND // 2, HEIGHT_OF_PLAYGROUND // 2])
 
     def frame_processing_func(self, frame):
         gazes = detect_gazes(frame)
@@ -203,6 +201,7 @@ class CheckGazeAccuracy:
             accuracy = checker.run()
             self.overall_accuracy += accuracy
 
+        cv2.destroyAllWindows()
         self.overall_accuracy /= len(self.target_points)
         print(f"Overall gaze detection accuracy: {self.overall_accuracy:.2f}%")
         return self.overall_accuracy
