@@ -1,11 +1,14 @@
+""" Main """
+
 import cv2
-import numpy as np
 from config import WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND
-from coordinate_transform import *
-from calibration import CalibrateGazeMapping, AlignFace, CheckGazeAccuracy
-from gaze_detection import EyesTrackingPositions
+from calibration.align_face import AlignFace
+from calibration.calibrate_points import CalibrateGazeMapping
+from calibration.check_accuracy import CheckGazeAccuracy
+from eye_tracking_game import EyeTrackingGame
 
 def main():
+    """Main function to run the eye tracking game."""
     cap = cv2.VideoCapture(0)
 
     # Check if the webcam is opened correctly
@@ -30,7 +33,7 @@ def main():
     accuracy_checker.run()
 
     # step 4: detect and track eyes with filtering
-    eyes_tracker = EyesTrackingPositions(cap, transformation_matrix)
+    eyes_tracker = EyeTrackingGame(cap, transformation_matrix)
     eyes_tracker.run()
 
 

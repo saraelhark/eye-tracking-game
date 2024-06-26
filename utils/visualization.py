@@ -1,6 +1,8 @@
+""" This is a module for visualizing gaze detection results. """
+
 import cv2
-import numpy as np
-from config import *
+import config as cfg
+
 
 def draw_face_square(img, gaze):
     """
@@ -18,7 +20,7 @@ def draw_face_square(img, gaze):
     x_max = int(face["x"] + face["width"] / 2)
     y_min = int(face["y"] - face["height"] / 2)
     y_max = int(face["y"] + face["height"] / 2)
-    cv2.rectangle(img, (x_min, y_min), (x_max, y_max), FACE_SQUARE_COLOR, FACE_SQUARE_THICKNESS)
+    cv2.rectangle(img, (x_min, y_min), (x_max, y_max), cfg.FACE_SQUARE_COLOR, cfg.FACE_SQUARE_THICKNESS)
     return img
 
 
@@ -32,11 +34,11 @@ def draw_ideal_square(img):
     Returns:
     numpy.ndarray: The image with the ideal square drawn.
     """
-    x_min = int(WIDTH_OF_PLAYGROUND / 2 - HEIGHT_OF_HUMAN_FACE / 2)
-    x_max = int(WIDTH_OF_PLAYGROUND / 2 + HEIGHT_OF_HUMAN_FACE / 2)
-    y_min = int(HEIGHT_OF_PLAYGROUND / 2 - HEIGHT_OF_HUMAN_FACE / 2)
-    y_max = int(HEIGHT_OF_PLAYGROUND / 2 + HEIGHT_OF_HUMAN_FACE / 2)
-    cv2.rectangle(img, (x_min, y_min), (x_max, y_max), IDEAL_SQUARE_COLOR, IDEAL_SQUARE_THICKNESS)
+    x_min = int(cfg.WIDTH_OF_PLAYGROUND / 2 - cfg.HEIGHT_OF_HUMAN_FACE / 2)
+    x_max = int(cfg.WIDTH_OF_PLAYGROUND / 2 + cfg.HEIGHT_OF_HUMAN_FACE / 2)
+    y_min = int(cfg.HEIGHT_OF_PLAYGROUND / 2 - cfg.HEIGHT_OF_HUMAN_FACE / 2)
+    y_max = int(cfg.HEIGHT_OF_PLAYGROUND / 2 + cfg.HEIGHT_OF_HUMAN_FACE / 2)
+    cv2.rectangle(img, (x_min, y_min), (x_max, y_max), cfg.IDEAL_SQUARE_COLOR, cfg.IDEAL_SQUARE_THICKNESS)
     return img
 
 
@@ -52,7 +54,7 @@ def draw_gaze_point(img, gaze_point):
     numpy.ndarray: The image with the gaze point drawn.
     """
     gaze_point_sat = gaze_point_saturation(img, gaze_point)
-    cv2.circle(img, gaze_point_sat, GAZE_POINT_RADIUS, GAZE_POINT_COLOR, -1)
+    cv2.circle(img, gaze_point_sat, cfg.GAZE_POINT_RADIUS, cfg.GAZE_POINT_COLOR, -1)
     return img
 
 
@@ -85,7 +87,7 @@ def draw_calibration_point(img, point):
     Returns:
     numpy.ndarray: The image with the calibration point drawn.
     """
-    cv2.circle(img, point, CALIBRATION_POINT_RADIUS, CALIBRATION_POINT_COLOR, -1)
+    cv2.circle(img, point, cfg.CALIBRATION_POINT_RADIUS, cfg.CALIBRATION_POINT_COLOR, -1)
     return img
 
 
@@ -125,8 +127,8 @@ def show_timer(img, timer):
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 0.8
     thickness = 2
-    text_x = WIDTH_OF_PLAYGROUND - 100
-    text_y = HEIGHT_OF_PLAYGROUND - 20
+    text_x = cfg.WIDTH_OF_PLAYGROUND - 100
+    text_y = cfg.HEIGHT_OF_PLAYGROUND - 20
     text_color = (0, 0, 255)
 
     cv2.putText(img, timer, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)

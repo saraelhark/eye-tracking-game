@@ -1,55 +1,23 @@
-import base64
-import cv2
+"""This module contains the EyeTrackingGame class"""
+
 import time
+import cv2
 import numpy as np
-import requests
-from config import *
-from coordinate_transform import *
-from visualization import draw_face_square, draw_gaze_point, show_timer
-from video import video_loop
-
-def detect_gazes(frame: np.ndarray):
-    """
-    Detect gazes in the given frame using the Roboflow API.
-
-    Args:
-    frame (numpy.ndarray): The input frame to detect gazes in.
-
-    Returns:
-    list: A list of detected gazes, where each gaze is a dictionary containing gaze information.
-    """
-    # Encode the frame as a JPEG image
-    _, img_encode = cv2.imencode(".jpg", frame)
-    
-    # Convert the encoded image to base64
-    img_base64 = base64.b64encode(img_encode).decode("utf-8")
-
-    # Prepare the request payload
-    payload = {
-        "api_key": API_KEY,
-        "image": {"type": "base64", "value": img_base64},
-    }
-
-    # Send the request to the Roboflow API
-    response = requests.post(GAZE_DETECTION_URL, json=payload)
-
-    # Check if the request was successful
-    if response.status_code == 200:
-        # Extract the predictions from the response
-        predictions = response.json()[0]["predictions"]
-        return predictions
-    else:
-        print(f"Error in gaze detection: {response.status_code} - {response.text}")
-        return []
+import config as cfg
+from utils.visualization import draw_gaze_point, show_timer
+from utils.video import video_loop
+from utils.coordinate_transform import transform_coordinates, calculate_gaze_point, calculate_gaze_point_displacements
+from utils.filters import apply_moving_average_filter, KalmanFilter
+from utils.gaze_detection import detect_gazes
 
 
-class EyesTrackingPositions:
+class EyeTrackingGame:
     def __init__(self, cap, transformation_matrix):
         self.cap = cap
         self.transformation_matrix = transformation_matrix
         self.gaze_history = []
-        self.window_size = GAZE_HISTORY_WINDOW_SIZE
-        self.kalman_filter = KalmanFilter([WIDTH_OF_PLAYGROUND // 2, HEIGHT_OF_PLAYGROUND // 2])
+        self.window_size = cfg.GAZE_HISTORY_WINDOW_SIZE
+        self.kalman_filter = KalmanFilter([cfg.WIDTH_OF_PLAYGROUND // 2, cfg.HEIGHT_OF_PLAYGROUND // 2])
         self.is_tracking = False
         self.n_shape_points = self.create_n_shape()
         self.timer_start = None
@@ -59,10 +27,10 @@ class EyesTrackingPositions:
     def create_n_shape(self):
         # Define the coordinates of the "N" shape
         n_shape_points = [
-            (100, HEIGHT_OF_PLAYGROUND - 100),
+            (100, cfg.HEIGHT_OF_PLAYGROUND - 100),
             (100, 100),
-            (WIDTH_OF_PLAYGROUND - 100, HEIGHT_OF_PLAYGROUND - 100),
-            (WIDTH_OF_PLAYGROUND - 100, 100)
+            (cfg.WIDTH_OF_PLAYGROUND - 100, cfg.HEIGHT_OF_PLAYGROUND - 100),
+            (cfg.WIDTH_OF_PLAYGROUND - 100, 100)
         ]
         return n_shape_points
     
@@ -78,7 +46,7 @@ class EyesTrackingPositions:
 
     def draw_tracked_points(self, img):
         for point in set(self.tracked_points):
-            img = cv2.circle(img, point, POLYLINE_THICKNESS // 2, (0,255,0), -1)
+            img = cv2.circle(img, point, cfg.POLYLINE_THICKNESS // 2, (0,255,0), -1)
         return img
 
     def detect_draw_gaze(self, frame):
@@ -88,7 +56,7 @@ class EyesTrackingPositions:
         frame = np.ones_like(frame) * 255
 
         # Draw the "N" shape
-        frame = cv2.polylines(frame, [np.array(self.n_shape_points, dtype=np.int32)], False, (0, 0, 255), POLYLINE_THICKNESS)
+        frame = cv2.polylines(frame, [np.array(self.n_shape_points, dtype=np.int32)], False, (0, 0, 255), cfg.POLYLINE_THICKNESS)
 
         if not gaze_data_list:
             return frame, False
@@ -97,10 +65,10 @@ class EyesTrackingPositions:
 
         # Calculate gaze point
         dx, dy = calculate_gaze_point_displacements(gaze)
-        gaze_x, gaze_y = calculate_gaze_point(dx, dy, WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND)
+        gaze_x, gaze_y = calculate_gaze_point(dx, dy, cfg.WIDTH_OF_PLAYGROUND, cfg.HEIGHT_OF_PLAYGROUND)
 
         # Transform coordinates
-        gaze_x, gaze_y = transform_coordinates(gaze_x, gaze_y, self.transformation_matrix, WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND)
+        gaze_x, gaze_y = transform_coordinates(gaze_x, gaze_y, self.transformation_matrix, cfg.WIDTH_OF_PLAYGROUND, cfg.HEIGHT_OF_PLAYGROUND)
 
         # Apply Kalman filter
         #filtered_point = self.kalman_filter.update(np.array([gaze_x, gaze_y]))

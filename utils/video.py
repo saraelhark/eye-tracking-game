@@ -1,6 +1,7 @@
+""" This module contains utility functions for working with video streams. """
+
 import cv2
-import numpy as np
-from visualization import add_text_overlay
+from utils.visualization import add_text_overlay
 
 def video_loop(cap, frame_processing_func, display_name="Video Loop", extra_text="", destroy_windows=True):
     """
@@ -35,6 +36,9 @@ def video_loop(cap, frame_processing_func, display_name="Video Loop", extra_text
 
 
 def display_frame(window_name, frame, text=""):
+    """
+    Show the frame with the text overlay (if any).
+    """
     add_text_overlay(frame, text)
     cv2.imshow(window_name, frame)
 
