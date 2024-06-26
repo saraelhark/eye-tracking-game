@@ -54,16 +54,30 @@ class EyesTrackingPositions:
         self.n_shape_points = self.create_n_shape()
         self.timer_start = None
         self.timer = 0
+        self.tracked_points = []
 
     def create_n_shape(self):
         # Define the coordinates of the "N" shape
-        n_shape_points = np.array([
-            [100, HEIGHT_OF_PLAYGROUND - 100], 
-            [100, 100], 
-            [WIDTH_OF_PLAYGROUND - 100, HEIGHT_OF_PLAYGROUND - 100], 
-            [WIDTH_OF_PLAYGROUND - 100, 100]
-        ], dtype=np.int32)
+        n_shape_points = [
+            (100, HEIGHT_OF_PLAYGROUND - 100),
+            (100, 100),
+            (WIDTH_OF_PLAYGROUND - 100, HEIGHT_OF_PLAYGROUND - 100),
+            (WIDTH_OF_PLAYGROUND - 100, 100)
+        ]
         return n_shape_points
+    
+    def check_gaze_point(self, gaze_x, gaze_y):
+        # Check if the gaze point overlaps with the "N" shape
+        gaze_point = (gaze_x, gaze_y)
+        is_inside = cv2.pointPolygonTest(np.array(self.n_shape_points, dtype=np.int32), gaze_point, False) >= 0
+
+        if is_inside:
+            self.tracked_points.append(gaze_point)
+
+    def draw_tracked_points(self, img):
+        for point in self.tracked_points:
+            img = cv2.circle(img, point, POLYLINE_THICKNESS // 2, (0,255,0), -1)
+        return img
 
     def detect_draw_gaze(self, frame):
         gaze_data_list = detect_gazes(frame)
@@ -72,7 +86,7 @@ class EyesTrackingPositions:
         frame = np.ones_like(frame) * 255
 
         # Draw the "N" shape
-        frame = cv2.polylines(frame, [self.n_shape_points], False, (0, 0, 255), 45)
+        frame = cv2.polylines(frame, [np.array(self.n_shape_points, dtype=np.int32)], False, (0, 0, 255), POLYLINE_THICKNESS)
 
         if not gaze_data_list:
             return frame, False
@@ -87,11 +101,17 @@ class EyesTrackingPositions:
         gaze_x, gaze_y = transform_coordinates(gaze_x, gaze_y, self.transformation_matrix, WIDTH_OF_PLAYGROUND, HEIGHT_OF_PLAYGROUND)
 
         # Apply Kalman filter
-        filtered_point = self.kalman_filter.update(np.array([gaze_x, gaze_y]))
-        filtered_x, filtered_y = map(int, filtered_point)
+        #filtered_point = self.kalman_filter.update(np.array([gaze_x, gaze_y]))
+        #filtered_x, filtered_y = map(int, filtered_point)
+
+        # apply weighted average filter
+        filtered_x, filtered_y = apply_moving_average_filter(self.gaze_history, (gaze_x, gaze_y), self.window_size)
 
         # Draw the gaze point on the frame
         frame = draw_gaze_point(frame, (filtered_x, filtered_y))
+
+        self.check_gaze_point(filtered_x, filtered_y)
+        self.draw_tracked_points(frame)
 
         if cv2.waitKey(1) & 0xFF == ord(" "):
             self.is_tracking = True
