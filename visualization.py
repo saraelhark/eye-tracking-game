@@ -21,6 +21,7 @@ def draw_face_square(img, gaze):
     cv2.rectangle(img, (x_min, y_min), (x_max, y_max), FACE_SQUARE_COLOR, FACE_SQUARE_THICKNESS)
     return img
 
+
 def draw_ideal_square(img):
     """
     Draw an ideal square in the middle of the image for face alignment.
@@ -38,6 +39,7 @@ def draw_ideal_square(img):
     cv2.rectangle(img, (x_min, y_min), (x_max, y_max), IDEAL_SQUARE_COLOR, IDEAL_SQUARE_THICKNESS)
     return img
 
+
 def draw_gaze_point(img, gaze_point):
     """
     Draw the gaze point on the image.
@@ -49,8 +51,28 @@ def draw_gaze_point(img, gaze_point):
     Returns:
     numpy.ndarray: The image with the gaze point drawn.
     """
-    cv2.circle(img, gaze_point, GAZE_POINT_RADIUS, GAZE_POINT_COLOR, -1)
+    gaze_point_sat = gaze_point_saturation(img, gaze_point)
+    cv2.circle(img, gaze_point_sat, GAZE_POINT_RADIUS, GAZE_POINT_COLOR, -1)
     return img
+
+
+def gaze_point_saturation(img, gaze_point):
+    """
+    Draw the gaze point on the image.
+    
+    Args:
+    img (numpy.ndarray): The image to draw on.
+    gaze_point (tuple): The (x, y) coordinates of the gaze point.
+    
+    Returns:
+    numpy.ndarray: The image with the gaze point drawn.
+    """
+    x, y = gaze_point
+    x = max(0, min(x, img.shape[1] - 1))
+    y = max(0, min(y, img.shape[0] - 1))
+    gaze_point = (x, y)
+    return gaze_point
+
 
 def draw_calibration_point(img, point):
     """
@@ -65,6 +87,7 @@ def draw_calibration_point(img, point):
     """
     cv2.circle(img, point, CALIBRATION_POINT_RADIUS, CALIBRATION_POINT_COLOR, -1)
     return img
+
 
 def add_text_overlay(img, text):
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -97,3 +120,13 @@ def add_text_overlay(img, text):
         cv2.putText(img, row2, (row2_x, row2_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
     else:
         cv2.putText(img, text, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
+
+def show_timer(img, timer):
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.8
+    thickness = 2
+    text_x = 600
+    text_y = 460
+    text_color = (0, 0, 255)
+
+    cv2.putText(img, timer, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
