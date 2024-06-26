@@ -33,7 +33,6 @@ def main():
     eyes_tracker = EyesTrackingPositions(cap, transformation_matrix)
     eyes_tracker.run()
 
-    
 
 if __name__ == "__main__":
     main()

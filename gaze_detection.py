@@ -71,11 +71,13 @@ class EyesTrackingPositions:
         gaze_point = (gaze_x, gaze_y)
         is_inside = cv2.pointPolygonTest(np.array(self.n_shape_points, dtype=np.int32), gaze_point, False) >= 0
 
-        if is_inside:
-            self.tracked_points.append(gaze_point)
+        if is_inside and gaze_point not in self.tracked_points:
+            # Find the closest point on the "N" shape
+            closest_point = min(self.n_shape_points, key=lambda p: np.linalg.norm(np.array(p) - np.array(gaze_point)))
+            self.tracked_points.append(closest_point)
 
     def draw_tracked_points(self, img):
-        for point in self.tracked_points:
+        for point in set(self.tracked_points):
             img = cv2.circle(img, point, POLYLINE_THICKNESS // 2, (0,255,0), -1)
         return img
 
