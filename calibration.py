@@ -4,7 +4,7 @@ import time
 from config import *
 from gaze_detection import detect_gazes, draw_gaze_point
 from coordinate_transform import *
-from visualization import draw_face_square, draw_ideal_square, draw_calibration_point
+from visualization import *
 from video import video_loop
 
 
@@ -45,9 +45,9 @@ class AlignFace:
         return frame, self.face_aligned
 
     def run(self):
-        print("Please align your face in the green square in the middle of the playground for 5 seconds.")
-        video_loop(self.cap, self.frame_processing_func, "Align Face in Ideal Square")
-        cv2.destroyAllWindows()
+        text = "Please align your face in the green square for 5 seconds."
+        print(text)
+        video_loop(self.cap, self.frame_processing_func, display_name="Align Face in Ideal Square", extra_text=text)
 
 
 class CalibrateCorner:
@@ -74,8 +74,9 @@ class CalibrateCorner:
         return frame, len(self.gaze_points) >= CALIBRATION_POINTS
 
     def calibrate(self):
-        print(f"Look at the {self.corner_name} corner of the playground and press the spacebar.")
-        video_loop(self.cap, self.frame_processing_func, "Gaze Calibration", destroy_windows=False)
+        text = f"Look at the {self.corner_name} corner of the playground and press the spacebar."
+        print(text)
+        video_loop(self.cap, self.frame_processing_func, display_name="Gaze Calibration", extra_text=text, destroy_windows=False)
         if self.gaze_points:
             return np.mean(self.gaze_points, axis=0)
         else:
@@ -165,8 +166,9 @@ class CheckGazeAccuracyForTarget:
         return frame, False
 
     def run(self):
-        print(f"Look at the target point and press the spacebar to start. Hold for {self.target_duration} seconds.")
-        video_loop(self.cap, self.frame_processing_func, "Gaze Accuracy Check")
+        text = f"Look at the target point and press the spacebar to start. Hold for {self.target_duration} seconds."
+        print(text)
+        video_loop(self.cap, self.frame_processing_func, "Gaze Accuracy Check", text, destroy_windows=False)
 
         accuracy = self.calculate_accuracy()
         print(f"Accuracy for this target: {accuracy:.2f}%")
@@ -196,7 +198,6 @@ class CheckGazeAccuracy:
         self.overall_accuracy = 0.0
 
     def run(self):
-        print("Press the spacebar to start the accuracy check.")
         for target_point in self.target_points:
             checker = CheckGazeAccuracyForTarget(self.cap, self.transformation_matrix, target_point)
             accuracy = checker.run()

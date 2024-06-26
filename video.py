@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
+from visualization import add_text_overlay
 
-def video_loop(cap, frame_processing_func, display_name="Video Loop", destroy_windows=True):
+def video_loop(cap, frame_processing_func, display_name="Video Loop", extra_text="", destroy_windows=True):
     """
     A generic video loop function that can be used across different use cases.
 
@@ -24,7 +25,7 @@ def video_loop(cap, frame_processing_func, display_name="Video Loop", destroy_wi
 
         processed_frame, stop_condition = frame_processing_func(frame)
 
-        display_frame(display_name, processed_frame)
+        display_frame(display_name, processed_frame, extra_text)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
@@ -33,8 +34,8 @@ def video_loop(cap, frame_processing_func, display_name="Video Loop", destroy_wi
         cv2.destroyAllWindows()
 
 
-def display_frame(window_name, frame):
-
+def display_frame(window_name, frame, text=""):
+    add_text_overlay(frame, text)
     cv2.imshow(window_name, frame)
 
 
