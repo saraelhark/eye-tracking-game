@@ -4,12 +4,14 @@ import time
 import cv2
 import numpy as np
 import config as cfg
+import logging
 from utils.coordinate_transform import transform_coordinates, calculate_gaze_point_displacements, calculate_gaze_point
 from utils.filters import KalmanFilter
 from utils.gaze_detection import detect_gazes
 from utils.visualization import draw_face_square, draw_calibration_point, draw_gaze_point
 from utils.video import video_loop
 
+logging.basicConfig(level=logging.INFO)
 
 class CheckGazeAccuracyForTarget:
     """
@@ -99,11 +101,10 @@ class CheckGazeAccuracyForTarget:
 
         """
         text = f"Look at the target point and press the spacebar to start. Hold for {self.target_duration} seconds."
-        print(text)
         video_loop(self.cap, self.frame_processing_func, "Gaze Accuracy Check", text, destroy_windows=False)
 
         accuracy = self.calculate_accuracy()
-        print(f"Accuracy for this target: {accuracy:.2f}%")
+        logging.info(f"Accuracy for this target: {accuracy:.2f}%")
         return accuracy
 
     def calculate_accuracy(self):
@@ -168,5 +169,5 @@ class CheckGazeAccuracy:
 
         cv2.destroyAllWindows()
         self.overall_accuracy /= len(self.target_points)
-        print(f"Overall gaze detection accuracy: {self.overall_accuracy:.2f}%")
+        logging.info(f"Overall gaze detection accuracy: {self.overall_accuracy:.2f}%")
         return self.overall_accuracy

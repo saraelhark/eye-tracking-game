@@ -3,11 +3,13 @@
 import cv2
 import numpy as np
 import config as cfg
+import logging
 from utils.gaze_detection import detect_gazes
 from utils.coordinate_transform import calculate_gaze_point_displacements, calculate_gaze_point
 from utils.visualization import draw_face_square, draw_calibration_point
 from utils.video import video_loop
 
+logging.basicConfig(level=logging.INFO)
 
 class CalibrateCorner:
     """Class for calibrating a specific corner of the gaze mapping."""
@@ -47,7 +49,7 @@ class CalibrateCorner:
                 dx, dy = calculate_gaze_point_displacements(gaze)
                 gaze_x, gaze_y = calculate_gaze_point(dx, dy, cfg.WIDTH_OF_PLAYGROUND, cfg.HEIGHT_OF_PLAYGROUND)
                 self.gaze_points.append((gaze_x, gaze_y))
-                print(f"Calibration point {len(self.gaze_points)} captured.")
+                logging.debug(f"Calibration point {len(self.gaze_points)} captured.")
             if len(self.gaze_points) == cfg.CALIBRATION_POINTS:
                 return frame, True
         return frame, len(self.gaze_points) >= cfg.CALIBRATION_POINTS
@@ -60,7 +62,6 @@ class CalibrateCorner:
             The mean gaze point coordinates for the corner.
         """
         text = f"Look at the {self.corner_name} corner of the playground and press the spacebar."
-        print(text)
         video_loop(self.cap, self.frame_processing_func, display_name="Gaze Calibration", extra_text=text, destroy_windows=False)
         if self.gaze_points:
             return np.mean(self.gaze_points, axis=0)

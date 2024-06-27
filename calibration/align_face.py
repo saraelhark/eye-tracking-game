@@ -77,5 +77,4 @@ class AlignFace:
         Prints a message and starts the video loop with the frame processing function.
         """
         text = "Please align your face in the green square for 5 seconds."
-        print(text)
         video_loop(self.cap, self.frame_processing_func, display_name="Align Face in Ideal Square", extra_text=text)

@@ -132,3 +132,24 @@ def show_timer(img, timer):
     text_color = (0, 0, 255)
 
     cv2.putText(img, timer, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
+
+def draw_target(frame, target_position):
+    """
+    Draw a target on the frame at the given position.
+
+    Args:
+    frame (numpy.ndarray): The input frame to draw the target on.
+    target_position (tuple): The (x, y) coordinates of the target position.
+
+    Returns:
+    numpy.ndarray: The frame with the target drawn on it.
+    """
+    x, y = target_position
+    radius = 40
+    color = (0, 0, 255)
+    thickness = 2
+
+    # Draw the target circle
+    frame = cv2.circle(frame, (x, y), radius, color, thickness)
+
+    return frame

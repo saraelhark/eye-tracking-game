@@ -4,8 +4,10 @@ import base64
 import cv2
 import numpy as np
 import requests
+import logging
 from config import API_KEY, GAZE_DETECTION_URL
 
+logging.basicConfig(level=logging.INFO)
 
 def detect_gazes(frame: np.ndarray):
     """
@@ -38,5 +40,5 @@ def detect_gazes(frame: np.ndarray):
         predictions = response.json()[0]["predictions"]
         return predictions
 
-    print(f"Error in gaze detection: {response.status_code} - {response.text}")
+    logging.error(f"Error in gaze detection: {response.status_code} - {response.text}")
     return []

@@ -1,7 +1,9 @@
 """ This module containe some filters to smooth gaze point coordinates. """
 import numpy as np
 import cv2
+import logging
 
+logging.basicConfig(level=logging.DEBUG)
 
 def apply_moving_average_filter(gaze_history, new_point, window_size):
     """
@@ -100,8 +102,8 @@ class KalmanFilter:
         measurement = np.array([[measurement[0]], [measurement[1]]], dtype=np.float32)
         predicted = self.kf.predict()
         updated = self.kf.correct(measurement)
-        # print(measurement[:2].flatten())
-        # print(predicted[:2].flatten())
-        # print(updated[:2].flatten())
+        logging.debug(measurement[:2].flatten())
+        logging.debug(predicted[:2].flatten())
+        logging.debug(updated[:2].flatten())
         return updated[:2].flatten()
     
