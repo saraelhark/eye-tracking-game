@@ -34,10 +34,12 @@ def draw_ideal_square(img):
     Returns:
     numpy.ndarray: The image with the ideal square drawn.
     """
-    x_min = int(cfg.WIDTH_OF_PLAYGROUND / 2 - cfg.HEIGHT_OF_HUMAN_FACE / 2)
-    x_max = int(cfg.WIDTH_OF_PLAYGROUND / 2 + cfg.HEIGHT_OF_HUMAN_FACE / 2)
-    y_min = int(cfg.HEIGHT_OF_PLAYGROUND / 2 - cfg.HEIGHT_OF_HUMAN_FACE / 2)
-    y_max = int(cfg.HEIGHT_OF_PLAYGROUND / 2 + cfg.HEIGHT_OF_HUMAN_FACE / 2)
+    image_height, image_width = img.shape[:2]
+
+    x_min = int(image_width / 2 - cfg.HEIGHT_OF_HUMAN_FACE / 2)
+    x_max = int(image_width / 2 + cfg.HEIGHT_OF_HUMAN_FACE / 2)
+    y_min = int(image_height / 2 - cfg.HEIGHT_OF_HUMAN_FACE / 2)
+    y_max = int(image_height / 2 + cfg.HEIGHT_OF_HUMAN_FACE / 2)
     cv2.rectangle(img, (x_min, y_min), (x_max, y_max), cfg.IDEAL_SQUARE_COLOR, cfg.IDEAL_SQUARE_THICKNESS)
     return img
 
@@ -124,11 +126,12 @@ def add_text_overlay(img, text):
         cv2.putText(img, text, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
 
 def show_timer(img, timer):
+    image_height, image_width = img.shape[:2]
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 0.8
     thickness = 2
-    text_x = cfg.WIDTH_OF_PLAYGROUND - 160
-    text_y = cfg.HEIGHT_OF_PLAYGROUND - 20
+    text_x = image_width - 160
+    text_y = image_height - 20
     text_color = (0, 0, 255)
 
     cv2.putText(img, timer, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)

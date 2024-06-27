@@ -62,10 +62,10 @@ class CheckGazeAccuracyForTarget:
         if len(gazes) > 0:
             gaze = gazes[0]
             frame = draw_face_square(frame, gaze)
-
+            image_width, image_height = frame.shape[:2]
             dx, dy = calculate_gaze_point_displacements(gaze)
-            gaze_x, gaze_y = calculate_gaze_point(dx, dy, cfg.WIDTH_OF_PLAYGROUND, cfg.HEIGHT_OF_PLAYGROUND)
-            gaze_x, gaze_y = transform_coordinates(gaze_x, gaze_y, self.transformation_matrix, cfg.WIDTH_OF_PLAYGROUND, cfg.HEIGHT_OF_PLAYGROUND)
+            gaze_x, gaze_y = calculate_gaze_point(dx, dy, image_width, image_height)
+            gaze_x, gaze_y = transform_coordinates(gaze_x, gaze_y, self.transformation_matrix, image_width, image_height)
 
             target_x, target_y = self.target_point
             draw_calibration_point(frame, (target_x, target_y))

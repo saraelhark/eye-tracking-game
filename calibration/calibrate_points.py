@@ -47,7 +47,8 @@ class CalibrateCorner:
             draw_calibration_point(frame, (self.corner_x, self.corner_y))
             if cv2.waitKey(1) & 0xFF == ord(" "):
                 dx, dy = calculate_gaze_point_displacements(gaze)
-                gaze_x, gaze_y = calculate_gaze_point(dx, dy, cfg.WIDTH_OF_PLAYGROUND, cfg.HEIGHT_OF_PLAYGROUND)
+                image_width, image_height = frame.shape[:2]
+                gaze_x, gaze_y = calculate_gaze_point(dx, dy, image_width, image_height)
                 self.gaze_points.append((gaze_x, gaze_y))
                 logging.debug(f"Calibration point {len(self.gaze_points)} captured.")
             if len(self.gaze_points) == cfg.CALIBRATION_POINTS:

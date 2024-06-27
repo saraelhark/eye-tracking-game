@@ -27,7 +27,7 @@ class EyeTrackingGame:
 
     def generate_target_positions(self):
         target_positions = []
-        for _ in range(3):
+        for _ in range(cfg.NUMBER_OF_TARGETS):
             x = random.randint(100, cfg.WIDTH_OF_PLAYGROUND - 100)
             y = random.randint(100, cfg.HEIGHT_OF_PLAYGROUND - 100)
             target_positions.append((x, y))
@@ -56,12 +56,14 @@ class EyeTrackingGame:
 
         gaze = gaze_data_list[0]
 
+        image_width, image_height = frame.shape[:2]
+
         # Calculate gaze point
         dx, dy = calculate_gaze_point_displacements(gaze)
-        gaze_x, gaze_y = calculate_gaze_point(dx, dy, cfg.WIDTH_OF_PLAYGROUND, cfg.HEIGHT_OF_PLAYGROUND)
+        gaze_x, gaze_y = calculate_gaze_point(dx, dy, image_width, cfg.HEIGHT_OF_PLAYGROUND)
 
         # Transform coordinates
-        gaze_x, gaze_y = transform_coordinates(gaze_x, gaze_y, self.transformation_matrix, cfg.WIDTH_OF_PLAYGROUND, cfg.HEIGHT_OF_PLAYGROUND)
+        gaze_x, gaze_y = transform_coordinates(gaze_x, gaze_y, self.transformation_matrix, image_width, image_height)
 
         # Apply Kalman filter
         filtered_point = self.kalman_filter.update(np.array([gaze_x, gaze_y]))
