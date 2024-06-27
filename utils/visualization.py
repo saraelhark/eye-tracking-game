@@ -127,7 +127,7 @@ def show_timer(img, timer):
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 0.8
     thickness = 2
-    text_x = cfg.WIDTH_OF_PLAYGROUND - 100
+    text_x = cfg.WIDTH_OF_PLAYGROUND - 160
     text_y = cfg.HEIGHT_OF_PLAYGROUND - 20
     text_color = (0, 0, 255)
 

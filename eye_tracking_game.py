@@ -20,9 +20,10 @@ class EyeTrackingGame:
         self.kalman_filter = KalmanFilter([cfg.WIDTH_OF_PLAYGROUND // 2, cfg.HEIGHT_OF_PLAYGROUND // 2])
         self.is_tracking = False
         self.target_positions = self.generate_target_positions()
-        self.targets_remaining = 3
+        self.targets_remaining = cfg.NUMBER_OF_TARGETS
         self.timer_start = None
         self.timer = 0
+        self.best_score = 0
 
     def generate_target_positions(self):
         target_positions = []
@@ -66,9 +67,6 @@ class EyeTrackingGame:
         filtered_point = self.kalman_filter.update(np.array([gaze_x, gaze_y]))
         filtered_x, filtered_y = map(int, filtered_point)
 
-        # apply weighted average filter
-        # filtered_x, filtered_y = apply_moving_average_filter(self.gaze_history, (gaze_x, gaze_y), self.window_size)
-
         # Draw the gaze point on the frame
         frame = draw_gaze_point(frame, (filtered_x, filtered_y))
 
@@ -83,16 +81,22 @@ class EyeTrackingGame:
                 self.is_tracking = False
                 self.timer_start = None
                 self.timer = 0
+        else:
+            if self.best_score > 0:
+                show_timer(frame, f"Best: {self.best_score / 1000:.1f} s")
 
         if self.targets_remaining == 0:
+            if self.best_score == 0 or self.timer < self.best_score:
+                self.best_score = self.timer
             self.is_tracking = False
             self.timer_start = None
             self.timer = 0
             self.target_positions = self.generate_target_positions()
-            self.targets_remaining = 3
+            self.targets_remaining = cfg.NUMBER_OF_TARGETS
 
         return frame, self.targets_remaining == 0
 
     def run(self):
         text = "Press the spacebar to start the game"
         video_loop(self.cap, self.detect_draw_gaze, display_name="Eye Tracking Game - Targets", extra_text=text)
+        

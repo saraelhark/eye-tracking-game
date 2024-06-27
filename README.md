@@ -7,6 +7,7 @@ I wanted something that didn't need special hardware (I don't have any stereo ca
 The program relies on Roboflow's inference library, I've started from this tutorial:  
 [James Gallagher. (Sep 22, 2023). Gaze Detection and Eye Tracking: A How-To Guide. Roboflow](https://blog.roboflow.com/gaze-direction-position/).
 
+The goal is to track the user's gaze on the screen.
 
 ## 👩‍💻 Local Setup
 
