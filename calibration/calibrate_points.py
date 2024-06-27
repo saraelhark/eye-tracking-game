@@ -9,7 +9,7 @@ from utils.coordinate_transform import calculate_gaze_point_displacements, calcu
 from utils.visualization import draw_face_square, draw_calibration_point
 from utils.video import video_loop
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 class CalibrateCorner:
     """Class for calibrating a specific corner of the gaze mapping."""

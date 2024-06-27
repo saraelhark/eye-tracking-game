@@ -1,7 +1,11 @@
 """ This module contains utility functions for working with video streams. """
 
+import time
 import cv2
+import logging
 from utils.visualization import add_text_overlay
+
+logging.basicConfig(level=logging.DEBUG)
 
 def video_loop(cap, frame_processing_func, display_name="Video Loop", extra_text="", destroy_windows=True):
     """
@@ -16,6 +20,9 @@ def video_loop(cap, frame_processing_func, display_name="Video Loop", extra_text
     Returns:
         None
     """
+    fps_start_time = time.time()
+    fps = 0
+    frame_count = 0
     stop_condition = False
     while not stop_condition:
         ret, frame = cap.read()
@@ -30,6 +37,13 @@ def video_loop(cap, frame_processing_func, display_name="Video Loop", extra_text
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
+
+        frame_count += 1
+        if time.time() - fps_start_time >= 1:
+            fps = frame_count / (time.time() - fps_start_time)
+            frame_count = 0
+            fps_start_time = time.time()
+            logging.debug(f"FPS: {fps:.2f}")
 
     if destroy_windows:
         cv2.destroyAllWindows()

@@ -7,7 +7,7 @@ import requests
 import logging
 from config import API_KEY, GAZE_DETECTION_URL
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 def detect_gazes(frame: np.ndarray):
     """
@@ -33,6 +33,9 @@ def detect_gazes(frame: np.ndarray):
 
     # Send the request to the Roboflow API
     response = requests.post(GAZE_DETECTION_URL, json=payload, timeout=10)
+
+    # print response time
+    logging.debug(f"Response time: {response.elapsed.total_seconds()}")
 
     # Check if the request was successful
     if response.status_code == 200:
