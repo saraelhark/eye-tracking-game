@@ -4,12 +4,12 @@ import cv2
 import config as cfg
 
 
-def draw_face_square(img, gaze):
+def draw_face_square(frame, gaze):
     """
     Draw a square around the detected face.
     
     Args:
-    img (numpy.ndarray): The image to draw on.
+    frame (numpy.ndarray): The image to draw on.
     gaze (dict): The gaze data containing face information.
     
     Returns:
@@ -20,85 +20,85 @@ def draw_face_square(img, gaze):
     x_max = int(face["x"] + face["width"] / 2)
     y_min = int(face["y"] - face["height"] / 2)
     y_max = int(face["y"] + face["height"] / 2)
-    cv2.rectangle(img, (x_min, y_min), (x_max, y_max), cfg.FACE_SQUARE_COLOR, cfg.FACE_SQUARE_THICKNESS)
-    return img
+    cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), cfg.FACE_SQUARE_COLOR, cfg.FACE_SQUARE_THICKNESS)
+    return frame
 
 
-def draw_ideal_square(img):
+def draw_ideal_square(frame):
     """
     Draw an ideal square in the middle of the image for face alignment.
     
     Args:
-    img (numpy.ndarray): The image to draw on.
+    frame (numpy.ndarray): The image to draw on.
     
     Returns:
     numpy.ndarray: The image with the ideal square drawn.
     """
-    image_height, image_width = img.shape[:2]
+    image_height, image_width = frame.shape[:2]
 
     x_min = int(image_width / 2 - cfg.HEIGHT_OF_HUMAN_FACE / 2)
     x_max = int(image_width / 2 + cfg.HEIGHT_OF_HUMAN_FACE / 2)
     y_min = int(image_height / 2 - cfg.HEIGHT_OF_HUMAN_FACE / 2)
     y_max = int(image_height / 2 + cfg.HEIGHT_OF_HUMAN_FACE / 2)
-    cv2.rectangle(img, (x_min, y_min), (x_max, y_max), cfg.IDEAL_SQUARE_COLOR, cfg.IDEAL_SQUARE_THICKNESS)
-    return img
+    cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), cfg.IDEAL_SQUARE_COLOR, cfg.IDEAL_SQUARE_THICKNESS)
+    return frame
 
 
-def draw_gaze_point(img, gaze_point):
+def draw_gaze_point(frame, gaze_point):
     """
     Draw the gaze point on the image.
     
     Args:
-    img (numpy.ndarray): The image to draw on.
+    frame (numpy.ndarray): The image to draw on.
     gaze_point (tuple): The (x, y) coordinates of the gaze point.
     
     Returns:
     numpy.ndarray: The image with the gaze point drawn.
     """
-    gaze_point_sat = gaze_point_saturation(img, gaze_point)
-    cv2.circle(img, gaze_point_sat, cfg.GAZE_POINT_RADIUS, cfg.GAZE_POINT_COLOR, -1)
-    return img
+    gaze_point_sat = gaze_point_saturation(frame, gaze_point)
+    cv2.circle(frame, gaze_point_sat, cfg.GAZE_POINT_RADIUS, cfg.GAZE_POINT_COLOR, -1)
+    return frame
 
 
-def gaze_point_saturation(img, gaze_point):
+def gaze_point_saturation(frame, gaze_point):
     """
     Draw the gaze point on the image.
     
     Args:
-    img (numpy.ndarray): The image to draw on.
+    frame (numpy.ndarray): The image to draw on.
     gaze_point (tuple): The (x, y) coordinates of the gaze point.
     
     Returns:
     numpy.ndarray: The image with the gaze point drawn.
     """
     x, y = gaze_point
-    x = max(0, min(x, img.shape[1] - 1))
-    y = max(0, min(y, img.shape[0] - 1))
+    x = max(0, min(x, frame.shape[1] - 1))
+    y = max(0, min(y, frame.shape[0] - 1))
     gaze_point = (x, y)
     return gaze_point
 
 
-def draw_calibration_point(img, point):
+def draw_calibration_point(frame, point):
     """
     Draw a calibration point on the image.
     
     Args:
-    img (numpy.ndarray): The image to draw on.
+    frame (numpy.ndarray): The image to draw on.
     point (tuple): The (x, y) coordinates of the calibration point.
     
     Returns:
     numpy.ndarray: The image with the calibration point drawn.
     """
-    cv2.circle(img, point, cfg.CALIBRATION_POINT_RADIUS, cfg.CALIBRATION_POINT_COLOR, -1)
-    return img
+    cv2.circle(frame, point, cfg.CALIBRATION_POINT_RADIUS, cfg.CALIBRATION_POINT_COLOR, -1)
+    return frame
 
 
-def add_text_overlay(img, text):
+def add_text_overlay(frame, text):
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 0.8
     thickness = 2
     text_size, _ = cv2.getTextSize(text, font, font_scale, thickness)
-    text_x = (img.shape[1] - text_size[0]) // 2
+    text_x = (frame.shape[1] - text_size[0]) // 2
     text_y = 20
     text_color = (255, 0, 0)
 
@@ -113,20 +113,21 @@ def add_text_overlay(img, text):
 
         # Draw the first row
         row1_size, _ = cv2.getTextSize(row1, font, font_scale, thickness)
-        row1_x = (img.shape[1] - row1_size[0]) // 2
+        row1_x = (frame.shape[1] - row1_size[0]) // 2
         row1_y = text_y
-        cv2.putText(img, row1, (row1_x, row1_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
+        cv2.putText(frame, row1, (row1_x, row1_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
 
         # Draw the second row
         row2_size, _ = cv2.getTextSize(row2, font, font_scale, thickness)
-        row2_x = (img.shape[1] - row2_size[0]) // 2
+        row2_x = (frame.shape[1] - row2_size[0]) // 2
         row2_y = row1_y + row1_size[1] + 10
-        cv2.putText(img, row2, (row2_x, row2_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
+        cv2.putText(frame, row2, (row2_x, row2_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
     else:
-        cv2.putText(img, text, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
+        cv2.putText(frame, text, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
 
-def show_timer(img, timer):
-    image_height, image_width = img.shape[:2]
+
+def show_timer(frame, timer):
+    image_height, image_width = frame.shape[:2]
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 0.8
     thickness = 2
@@ -134,7 +135,8 @@ def show_timer(img, timer):
     text_y = image_height - 20
     text_color = (0, 0, 255)
 
-    cv2.putText(img, timer, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
+    cv2.putText(frame, timer, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
+
 
 def draw_target(frame, target_position):
     """
