@@ -71,13 +71,16 @@ Here are some preliminary results I got:
 | Adaptive Moving Average |   96%    |
 | Kalman Filter |   92%    |
 
+The Kalman Filter tuning can be optimized.
+
 
 ## ✨ Demo
 
-Here is a demo of the game:
-(TBD add GIF)
+Here is a demo of the game, (using the Kalman Filter for filtering):
+![game-demo](https://github.com/saraelhark/eye-tracking-game/assets/41480355/154dc427-bf2f-4e85-9dd1-1d3a1c3ce3ce)
 
 The video has low fps (due to the slow processing on my machine), which adds a delay on the gaze dot movements.
+The accuracy is not great: the head position is important for gaze prediction but looking at a small frame 640x480 doesn't require moving your head.
 
 
 ## 🤝 Contributions
