@@ -46,20 +46,23 @@ At some point I want to deploy this on my website, but still need to figure out 
 
 
 ## 🎯 Accuracy
+I've set the resolution to 640x480 to not add too much overhead with larger frames.
 
 To improve accuracy:  
 1. I added a step to get the face position in the center of the frame, to get more uniform results.
 
 2. There is a 5 point calibration: each point is captured 4 times and the averages are used to calculate the transformation matrix.
 
-(TBD add GIF)
+
+<img src="https://github.com/saraelhark/eye-tracking-game/assets/41480355/60fa3efe-e308-4c78-a608-14093ec1ad74" width="427" height="320">
 
 3. I tested different filtering techniques.  
 
 With the class `CheckGazeAccuracyForTarget` it's possible to calculate accuracy, adding different filtering techniques.  
 The user needs to look at target points for a specified amount of time and then the normalised distance (considering the frame size) from the acquired gaze points and the target point is calculated.  
 
-(TBD add GIF)
+
+<img src="https://github.com/saraelhark/eye-tracking-game/assets/41480355/5a90e105-3103-4a17-ac96-0f55fadcf49a" width="427" height="320">
 
 Here are some preliminary results I got:
 
@@ -77,7 +80,9 @@ The Kalman Filter tuning can be optimized.
 ## ✨ Demo
 
 Here is a demo of the game, (using the Kalman Filter for filtering):
-![game-demo](https://github.com/saraelhark/eye-tracking-game/assets/41480355/154dc427-bf2f-4e85-9dd1-1d3a1c3ce3ce)
+
+
+<img src="https://github.com/saraelhark/eye-tracking-game/assets/41480355/154dc427-bf2f-4e85-9dd1-1d3a1c3ce3ce" width="427" height="320">
 
 The video has low fps (due to the slow processing on my machine), which adds a delay on the gaze dot movements.
 The accuracy is not great: the head position is important for gaze prediction but looking at a small frame 640x480 doesn't require moving your head.
